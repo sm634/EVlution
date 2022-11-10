@@ -21,6 +21,8 @@ model_params:
   pop_load_base_file: 'Inputs//load_curve.csv'
   EV_load_base_file: 'Inputs//EV_load_base.csv'
   steps: 50
+  pop_growth_set: 'agent'
+  ev_growth_set: 'agent'
 
 agent_params: 
   pop_growth: [0.0005, 0.0001]

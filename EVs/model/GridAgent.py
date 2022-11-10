@@ -8,13 +8,15 @@ class GridAgent(Agent):
     def __init__(self, unique_id, model, pos, radius):
         """ initialise agent from model params """
         super().__init__(unique_id, model)
+        
+        for k,v in model.cfg['agent_params']['Grid_Points'].items():
+            setattr(self,k,v)
+
         self.id = unique_id
         self.pos = pos
+        self.radius = radius
         self.X = pos[0]
         self.Y = pos[1]
-        self.radius = radius
-        self.cars_passing = 0
-        self.Type = 'GP'
         
     def __repr__(self) -> str:
         return "EV: " + self.id

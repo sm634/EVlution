@@ -5,19 +5,18 @@ import math
 class EVAgent(Agent):
     """An Electric Vehical Agent with starting charge, home and work locations"""
 
-    def __init__(self, unique_id, model, speed, discharge_rate):
+    def __init__(self, unique_id, model):
         """ initialise agent from model params """
 
         super().__init__(unique_id, model)
         self.id = unique_id
-        self.wealth = 1
-        self.max_range = 1
+        self.dx = 0
+        self.dy = 0
+
+        for k,v in model.cfg['agent_params']['EVs'].items():
+            setattr(self,k,v)
+
         self.charge = np.random.uniform(0.5,1)*self.max_range
-        self.charging = False
-        self.Type = 'EV'
-        self.speed = speed
-        self.discharge_rate = discharge_rate
-        self.dx, self.dy = 0, 0
 
         #set up starting locations for the EV agent
         if len(self.model.POIs)>3:
@@ -60,8 +59,7 @@ class EVAgent(Agent):
             # optimse route based on charging points
 
         if self.charging:
-            self.charge_EV()
-            pass
+            self.check_charge()
 
         if self.charge <= 0.2:
             self.get_new_location()
@@ -71,7 +69,7 @@ class EVAgent(Agent):
         pf = self.locations[self.next_location]
         D, x_d, y_d = self.get_distance(pi, pf) # find distance and direction to location
 
-        if D < self.model.speed: # if can reach destination this step
+        if D < self.speed: # if can reach destination this step
             new_position = pf
             self.last_location = self.next_location
             self.dx, self.dy = 0, 0
@@ -80,19 +78,10 @@ class EVAgent(Agent):
             else:
                 self.get_new_location()
                 self.model.completed_trip += 1 # reached destination
-
-        elif self.model.MoveType == 'random': # fully random movement
-            x2 = self.pos[0] + (self.random.random()-0.5) * self.speed
-            x2 = np.clip(x2,0,self.model.width)
-            
-            y2 = self.pos[1] + (self.random.random()-0.5) * self.speed
-            y2 = np.clip(y2,0,self.model.height)
-            new_position = [x2,y2]
-
         else: 
             theta = math.atan(abs(y_d/x_d))
-            self.dx = math.cos(theta) * self.model.speed * np.sign(x_d)
-            self.dy = math.sin(theta) * self.model.speed * np.sign(y_d)
+            self.dx = math.cos(theta) * self.speed * np.sign(x_d)
+            self.dy = math.sin(theta) * self.speed * np.sign(y_d)
             new_position = (pi[0] + self.dx, pi[1] + self.dy) # move toward destination 
             
         self.charge -= self.discharge_rate # moving uses charge at rate = discharge_rate
@@ -103,7 +92,7 @@ class EVAgent(Agent):
         """ how to determine where to go next """
         if self.charging: # not move if still charging
             pass
-        if self.charge > 0.5: # if still got plenty of charge then select new location randomly
+        elif self.charge > 0.5: # if still got plenty of charge then select new location randomly
             self.location_names = list(self.locations.keys())
             locations_names_new = self.location_names[:]
             locations_names_new.remove(self.last_location)
@@ -142,9 +131,9 @@ class EVAgent(Agent):
         best_CL = min(distances, key=distances.get)
         self.locations['charge'] = self.model.charge_locations[best_CL]
 
-    def charge_EV(self):
-        """ if made it to a charge point then charge untill battery fully charged """
-        self.charge += self.model.charge_rate 
+    def check_charge(self):
+        """ if made it to a charge point then charge untill battery fully charged
+            Charges via the ChargeEV function in the chargePoint code """
         if self.charge >= 1:  # if fully charged then can move on to new location
             self.charging = False
             self.get_new_location()
