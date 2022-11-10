@@ -1,0 +1,45 @@
+output:
+  output_dir: 'data//'
+  model_reporters: 
+    av_charge: 'av_charge'
+    completed_trip: 'completed_trip'
+    dead_cars: 'dead_cars'
+  agent_reporters: 
+    charge: "charge"
+    last_location: 'last_location'
+    next_location: 'next_location'
+    pos: 'pos'
+
+model_params: 
+  start_date : '2022-01-01'
+  width: 10.
+  height: 10.
+  model_name :  0
+  tol: 0.01
+  POI_file: 'None'
+
+agent_params: 
+  EVs: 
+    Type: 'CP'
+    from_file: False
+    num_agents: 100
+    # file: 'inputs/'
+    discharge_rate: 0.01
+    MoveType :  'loc'
+    charging: False
+    max_range: 1
+    speed: 0.2
+  Grid_Points:
+    Type: 'GP'
+    grid_spacing :  20
+    cars_passing: 0
+  Charge_Points:
+    Type: 'CP'
+    CP_loc: 'random'
+    CP_capacity: 10
+    N_Charge: 10
+    charge_rate :  0.2
+    cars_charging: 0
+    full: False
+
+
