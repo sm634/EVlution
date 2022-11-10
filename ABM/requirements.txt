@@ -1,0 +1,6 @@
+mesa
+seaborn
+numpy
+pandas
+yaml
+matplotlib

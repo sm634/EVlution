@@ -1,0 +1,28 @@
+output:
+  output_dir: 'data//'
+  model_reporters: 
+    tot_pop: 'tot_pop'
+    tot_EV_sat: 'tot_EV_sat'
+    tot_EVs: 'tot_EVs'
+    total_daily_use: 'total_daily_use'
+    pop_daily_use: 'pop_daily_use'
+    ev_daily_use: 'ev_daily_use'
+  agent_reporters: 
+    EV_sat: 'EV_sat'
+    Pop: 'Pop'
+    EVs: 'EV_num'
+    total_daily_use: 'total_daily_use'
+    pop_daily_use: 'pop_daily_use'
+    ev_daily_use: 'ev_daily_use'
+
+model_params: 
+  start_date : '2022-01-01'
+  OPS_data_file: 'Inputs//OPS_data.csv'
+  pop_load_base_file: 'Inputs//load_curve.csv'
+  EV_load_base_file: 'Inputs//EV_load_base.csv'
+  steps: 50
+
+agent_params: 
+  pop_growth: [0.0005, 0.0001]
+  ev_growth: [0.005,0.001]
+  seasonal_fract: 0

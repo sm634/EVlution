@@ -43,15 +43,6 @@ model_params = {
         0.001,
         description="Choose how many agents to include in the model",
     ),
-    # "seasonal_fract": UserSettableParameter(
-    #     "slider",
-    #     "seasonal_fract",
-    #     0.1,
-    #     0,
-    #     0.5,
-    #     0.05,
-    #     description="Choose how many agents    to include in the model",
-    # ),
     "pop_growth": UserSettableParameter(
         "slider",
         "pop_growth",
@@ -60,10 +51,7 @@ model_params = {
         0.01,
         0.0001,
         description="Choose how many agents to include in the model",
-    ),
-     'OPS_data':'Data/OPS_data.csv',
-     'load_curve':'Data/load_curve.csv',
-     'EV_load_base':'Data/EV_load_base.csv',
+    )
 }
 
 server = ModularServer(EV_model, [ chart,barchart], "Money Model", model_params)
