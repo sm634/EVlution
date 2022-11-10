@@ -12,3 +12,4 @@ Python version==3.7
 - Numpy
 - Seaborn
 - geopandas
+- Shapely
