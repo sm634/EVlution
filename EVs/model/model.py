@@ -19,6 +19,7 @@ class EVSpaceModel(Model):
         # Read in configuration files from yaml. If any additional configs then will overwrite base
         self.read_configs(kwargs)
 
+        self.location_probs = pd.read_csv(self.location_probs).set_index('hour')    
         self.date_time = pd.to_datetime(self.start_date)
 
         # set up model space
@@ -174,19 +175,26 @@ class EVSpaceModel(Model):
     
     def update_vars(self):
         charge_list = []
-        moving_list = []
-        charge_drain = []
+        charge_load = []
+        locs = []
         for agent in self.schedule.agents:
             charge_list.append(agent.charge)
-            moving_list.append(agent.moving)
-            charge_drain.append(agent.charge_drain)
-            
+            charge_load.append(agent.charge_load)
+            if agent.moving:
+                locs.append('moving')
+            else:
+                locs.append(agent.last_location)
+
         charge_list = np.array(charge_list)
+        locs = np.array(locs)
+
         self.av_charge = np.mean(charge_list)
+        self.charge_load = np.mean(charge_load)
         self.dead_cars = len(charge_list[charge_list<0])/len(charge_list)        
-        self.av_moving = np.mean(moving_list)
-        self.charge_drain = np.mean(charge_drain)
-        
+        self.av_moving = np.mean(locs=='moving')
+        self.av_home = np.mean(locs=='home')
+        self.av_work = np.mean(locs=='work')
+        self.av_random = np.mean(locs=='random')
             
 
     def collect(self):

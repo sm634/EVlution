@@ -57,10 +57,14 @@ chart2 = ChartModule(
     [{"Label": "av_charge", "Color": "#0000FF"}], data_collector_name="datacollector"
 )
 chart3 = ChartModule(
-    [{"Label": "av_moving", "Color": "#0000FF"}], data_collector_name="datacollector"
+    [{"Label": "av_moving", "Color": "blue"},
+    {"Label": "av_home", "Color": "red"},
+    {"Label": "av_work", "Color": "green"},
+    {"Label": "av_random", "Color": "pink"},
+        ], data_collector_name="datacollector"
 )
 chart4 = ChartModule(
-    [{"Label": "charge_drain", "Color": "#0000FF"}], data_collector_name="datacollector"
+    [{"Label": "charge_load", "Color": "#0000FF"}], data_collector_name="datacollector"
 )
 
 model_params = {
