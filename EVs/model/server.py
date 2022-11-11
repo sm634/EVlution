@@ -57,69 +57,23 @@ chart2 = ChartModule(
     [{"Label": "av_charge", "Color": "#0000FF"}], data_collector_name="datacollector"
 )
 chart3 = ChartModule(
-    [{"Label": "completed_trip", "Color": "#0000FF"}], data_collector_name="datacollector"
+    [{"Label": "av_moving", "Color": "#0000FF"}], data_collector_name="datacollector"
+)
+chart4 = ChartModule(
+    [{"Label": "charge_drain", "Color": "#0000FF"}], data_collector_name="datacollector"
 )
 
 model_params = {
-    "model_name": UserSettableParameter('number', value=0, description="Model Name"),
-    "N": UserSettableParameter(
-        "slider", #type of button
-        "Number of agents", # name
-        100, # inital
-        10, # min
-        1000, # max
-        10, # increment
-        description="Choose how many agents to include in the model",
-    ),
-    "N_Charge": UserSettableParameter(
-        "slider", #type of button
-        "Number of Charge Points", # name
-        10, # inital
-        1, # min
-        50, # max
-        1, # increment
-        description="Choose how many Charge points to include in the model",
-    ),
-    "CP_loc": UserSettableParameter(
-        "choice", 
-        'Charge Point Distribution', 
-        value='random',
-        choices=['random', 'uniform','inputs/CP_locs.csv'],
-        description="How to distribute charge points",
-    ),
-    "POIs": UserSettableParameter(
+    "xx_model_title": UserSettableParameter('static_text', value="Model Parameters"),
+    "ModelP_model_name": UserSettableParameter('number', value=0, description="Model Name"),
+    "ModelP_POI_file": UserSettableParameter(
         "choice", 
         'POIs', 
         value='None',
         choices=['None','inputs/POIs.csv'],
         description="How to distribute EV POIs",
     ),
-    "MoveType": UserSettableParameter(
-        "choice", 
-        'Movement Type', 
-        value='loc',
-        choices=['loc', 'random'],
-        description="Is movement location based or fully random",
-    ),
-    "speed": UserSettableParameter(
-        "slider",
-        "Speed of Movement",
-        .2,
-        0,
-        2,
-        0.1,
-        description="Speed agents can move each step",
-    ),
-    "discharge_rate": UserSettableParameter(
-        "slider",
-        "discharge_rate",
-        0.01,
-        0.01,
-        0.2,
-        0.01,
-        description="discharge_rate",
-    ),
-    "width": UserSettableParameter(
+    "ModelP_width": UserSettableParameter(
         "slider", #type of button
         "width", # name
         10., # inital
@@ -128,7 +82,7 @@ model_params = {
         1., # increment
         description="width",
     ),
-    "height": UserSettableParameter(
+    "ModelP_height": UserSettableParameter(
         "slider", #type of button
         "height", # name
         10., # inital
@@ -137,7 +91,53 @@ model_params = {
         1., # increment
         description="height",
     ),
+    "xx_ev_title": UserSettableParameter('static_text', value="Electric Vehical Parameters"),
+    "EVP_num_agents": UserSettableParameter(
+        "slider", #type of button
+        "Number of agents", # name
+        100, # inital
+        10, # min
+        1000, # max
+        10, # increment
+        description="Choose how many agents to include in the model",
+    ),
+    "EVP_speed": UserSettableParameter(
+        "slider",
+        "Speed of Movement",
+        .2,
+        0,
+        2,
+        0.1,
+        description="Speed agents can move each step",
+    ),
+    "EVP_discharge_rate": UserSettableParameter(
+        "slider",
+        "discharge_rate",
+        0.01,
+        0.01,
+        0.2,
+        0.01,
+        description="discharge_rate",
+    ),
+    
+    "xx_charge_title": UserSettableParameter('static_text', value="CP Parameters"),
+    "ChargeP_N_Charge": UserSettableParameter(
+        "slider", #type of button
+        "Number of Charge Points", # name
+        10, # inital
+        1, # min
+        50, # max
+        1, # increment
+        description="Choose how many Charge points to include in the model",
+    ),
+    "ChargeP_CP_loc": UserSettableParameter(
+        "choice", 
+        'Charge Point Distribution', 
+        value='random',
+        choices=['random', 'uniform','inputs/CP_locs.csv'],
+        description="How to distribute charge points",
+    ),
 }
 
-server = ModularServer(EVSpaceModel, [grid, chart,chart2,chart3], "EV Model", model_params)
+server = ModularServer(EVSpaceModel, [grid, chart,chart2,chart3,chart4], "EV Model", model_params)
 server.port = 8521

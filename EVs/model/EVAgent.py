@@ -12,6 +12,9 @@ class EVAgent(Agent):
         self.id = unique_id
         self.dx = 0
         self.dy = 0
+        self.full = 0 # to make vis work (full corresponding to charge points)
+        self.moving = True
+        self.charge_drain = 0
 
         for k,v in model.cfg['agent_params']['EVs'].items():
             setattr(self,k,v)
@@ -28,7 +31,7 @@ class EVAgent(Agent):
                         }
             self.model.POIs.loc[rand_locs.index,'uses'] += 1
         else:
-            self.locations = {  'home': (np.random.random() * self.model.width,
+            self.locations = {'home': (np.random.random() * self.model.width,
                                     np.random.random() * self.model.height),
                             'work': (np.random.random() * self.model.width,
                                     np.random.random() * self.model.height),
@@ -47,8 +50,11 @@ class EVAgent(Agent):
         self.pos = self.locations[self.last_location]
         self.X = self.pos[0]
         self.Y = self.pos[1]
+        
+        self.agent_schedule()
 
     def __repr__(self) -> str:
+        """ representation of agent """
         return "EV: {}".format(self.id)
 
     def move(self):
@@ -58,26 +64,23 @@ class EVAgent(Agent):
             # move to network model only leave a node if can get to next
             # optimse route based on charging points
 
-        if self.charging:
-            self.check_charge()
-
-        if self.charge <= 0.2:
-            self.get_new_location()
-
+        self.moving = True
         # location based movement, EVs move toward a location, when they get there they get a new location
         pi = self.pos
         pf = self.locations[self.next_location]
         D, x_d, y_d = self.get_distance(pi, pf) # find distance and direction to location
 
         if D < self.speed: # if can reach destination this step
+            # todo if at destination = True
             new_position = pf
             self.last_location = self.next_location
             self.dx, self.dy = 0, 0
             if self.last_location == 'charge':
                 self.charging = True # reached charge point
             else:
-                self.get_new_location()
                 self.model.completed_trip += 1 # reached destination
+                self.agent_schedule()
+                
         else: 
             theta = math.atan(abs(y_d/x_d))
             self.dx = math.cos(theta) * self.speed * np.sign(x_d)
@@ -135,9 +138,47 @@ class EVAgent(Agent):
         """ if made it to a charge point then charge untill battery fully charged
             Charges via the ChargeEV function in the chargePoint code """
         if self.charge >= 1:  # if fully charged then can move on to new location
+            self.charge = 1
             self.charging = False
             self.get_new_location()
 
+    def agent_schedule(self):
+        """ Just got to new location. decide how long to wait and where to go next """
+        self.moving = False
+        if self.last_location == 'home': 
+            self.wait = np.random.normal(self.home_stay,1)
+        if self.last_location == 'work':
+            self.wait = np.random.normal(self.work_stay,1)
+        if self.last_location == 'random':
+            self.wait = np.random.normal(self.rand_stay,1)
+        self.wait = round(self.wait)
+
+
     def step(self):
         """ key agent step, can add functions in here for agent behaviours """
-        self.move()
+        
+        # by default not moving on start of step
+        self.charge_drain = 0
+        if self.charging:
+            self.check_charge()  # check if charging, if now full
+        
+        if self.charge <= 0.2: # if charge getting low, head straight to the nearest charge point
+            self.get_new_location()
+        
+        #if still charging then continue untill full
+        if self.charging:
+            self.charge_drain = 1 # how fast charging = load
+            pass # if still charging then dont move
+        else:
+            self.charge_drain = 0
+            
+        #if still waiting then continue to wait
+        if self.wait > 0:
+            self.wait -= 1
+        #if not waiting then can move
+        else : 
+            #if not currently moving then choose new location and start moving
+            if not self.moving:
+                self.get_new_location()
+            self.moving = True
+            self.move()
