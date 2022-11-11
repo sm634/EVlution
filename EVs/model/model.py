@@ -9,32 +9,18 @@ import pandas as pd
 import itertools
 import yaml
 from .datacollection import DataCollector
-
-def compute_gini(model):
-    agent_wealths = [agent.wealth for agent in model.schedule.agents]
-    x = sorted(agent_wealths)
-    N = model.num_agents
-    B = sum(xi * (N - i) for i, xi in enumerate(x)) / (N * sum(x))
-    return 1 + (1 / N) - 2 * B
-    
-def av_charge(model):
-    agent_charges = [agent.charge for agent in model.schedule.agents]
-    return sum(agent_charges)/len(agent_charges)
-
-def dead_cars(model):
-    dead_cars = 0
-    for agent in model.schedule.agents:
-        if agent.charge<=0:
-            dead_cars += 1
-    return dead_cars
+import datetime 
 
 class EVSpaceModel(Model):
     """ Electric Vehical Model, where cars drive around between locations then pull into charge points """
     def __init__(self, **kwargs):  
         """ initalisation of the model, set up agent space, agents and collection modules"""
+
         # Read in configuration files from yaml. If any additional configs then will overwrite base
         self.read_configs(kwargs)
-        print(self.cfg)
+
+        self.date_time = pd.to_datetime(self.start_date)
+
         # set up model space
         self.space = ContinuousSpace(self.width+self.tol, self.height+self.tol, False,
                                         x_min=-self.tol,y_min=-self.tol) 
@@ -54,13 +40,12 @@ class EVSpaceModel(Model):
         self.datacollector = DataCollector(schedule='schedule',
             model_reporters = self.cfg['output']['model_reporters'], 
             agent_reporters = self.cfg['output']['agent_reporters']
-        ) # also could have deadline to work out if can get there one current charge                 
+        )            
         for i in range(self.cfg['agent_params']['EVs']['num_agents']):
             a = EVAgent(i, self)
             self.schedule.add(a)
             # Add the agent to a random space
             self.space.place_agent(a, a.pos)
-        self.datacollector.collect(self)
 
         #set up charging points
         self.schedule_CP = RandomActivation(self)
@@ -70,7 +55,6 @@ class EVSpaceModel(Model):
                             'full':'full'}
         )
         self.gen_CPs()
-        self.datacollector_CP.collect(self)
 
         #set up grid points for analysis
         self.schedule_gridpoints = RandomActivation(self)
@@ -82,8 +66,12 @@ class EVSpaceModel(Model):
         )
         self.gen_GPs()
         self.schedule_gridpoints.step()
-        self.datacollector_gridpoints.collect(self)
 
+        self.update_vars()
+
+        self.datacollector.collect(self)
+        self.datacollector_CP.collect(self)
+        self.datacollector_gridpoints.collect(self)
         self.running = True
 
 
@@ -91,25 +79,40 @@ class EVSpaceModel(Model):
         """ Read in configuation parameters from file given to set up model and agents"""
 
         # firstly read in config file if given, else take base_config.yml 
-        if 'cfg' in kwargs.keys():
-            cfg_file = kwargs['cfg']
-        else:
-            cfg_file = 'configs/base_cfg.yml'
+        # if 'cfg' in kwargs.keys():
+        #     cfg_file = kwargs['cfg']
+        # else:
+        cfg_file = 'configs/base_cfg.yml'
         
         with open(cfg_file,'r') as ymlfile:
             self.cfg = yaml.safe_load(ymlfile)
         
+        #loops through user set params and assigns them to the 
+        # any additional key word arguments given in modle run instance will overwrite any params from the config file.
+        # this is how we can use the vis tool to update params
+        for key, val in kwargs.items():
+            if 'ModelP_' in key:
+                key_new = key.replace("ModelP_", "")
+                self.cfg['model_params'][key_new] = val
+            elif 'EVP_' in key:
+                key_new = key.replace("EVP_", "")
+                self.cfg['agent_params']['EVs'][key_new] = val
+            elif 'ChargeP_' in key:
+                key_new = key.replace("ChargeP_", "")
+                self.cfg['agent_params']['Charge_Points'][key_new] = val
+        print(self.cfg)
+        # for k,v in kwargs.items(): # superseeded
+        #     setattr(self,k,v)
+                
         # take model_params from config file and assign them as attributes to model class
         for k,v in self.cfg['model_params'].items():
             setattr(self,k,v)
         
-        # any additional key word arguments given in modle run instance will overwrite any params from the config file.
-        # this is how we can use the vis tool to update params
-        for k,v in kwargs.items():
-            setattr(self,k,v)
 
     def gen_CPs(self):
         ''' determine charge point locations, either uniform or randomly distribute '''
+        self.CP_loc = self.cfg['agent_params']['Charge_Points']['CP_loc']
+        self.N_Charge = self.cfg['agent_params']['Charge_Points']['N_Charge']
         if isinstance(self.CP_loc, pd.DataFrame):
             self.N_Charge = len(self.CP_loc)
             names = self.CP_loc.index
@@ -162,19 +165,36 @@ class EVSpaceModel(Model):
 
     def step(self):
         """ This is the key model function which is run once each step. Here we loop through the agent schedule, which performs each agent step """
+        self.date_time += datetime.timedelta(hours=self.time_increment)
         self.completed_trip = 0 
         self.schedule.step()
         self.schedule_CP.step()
         self.schedule_gridpoints.step()
         self.collect()
     
+    def update_vars(self):
+        charge_list = []
+        moving_list = []
+        charge_drain = []
+        for agent in self.schedule.agents:
+            charge_list.append(agent.charge)
+            moving_list.append(agent.moving)
+            charge_drain.append(agent.charge_drain)
+            
+        charge_list = np.array(charge_list)
+        self.av_charge = np.mean(charge_list)
+        self.dead_cars = len(charge_list[charge_list<0])/len(charge_list)        
+        self.av_moving = np.mean(moving_list)
+        self.charge_drain = np.mean(charge_drain)
+        
+            
+
     def collect(self):
         ''' collect data '''
+        self.update_vars()
         self.datacollector.collect(self) # collect agent and model information
         self.datacollector_CP.collect(self) # collect agent and model information
         self.datacollector_gridpoints.collect(self) # collect agent and model information
-        # for agent in self.schedule.agents:
-        #     if agent.Type == 'CP':
 
         if self.schedule.steps == 100:
             self.save()  # crude save technique for online models
