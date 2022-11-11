@@ -4,9 +4,12 @@ output:
     av_charge: 'av_charge'
     completed_trip: 'completed_trip'
     dead_cars: 'dead_cars'
-    av_moving: 'av_moving'
-    charge_drain: 'charge_drain'
+    charge_load: 'charge_load'
     date_time: 'date_time'
+    av_moving: 'av_moving'
+    av_home: 'av_home'
+    av_work: 'av_work'
+    av_random: 'av_random'
   agent_reporters: 
     charge: "charge"
     last_location: 'last_location'
@@ -14,15 +17,20 @@ output:
     pos: 'pos'
     charging: 'charging'
     wait: 'wait'
+    moving: 'moving'
+    completed_trip: 'completed_trip'
+    dist_moved: 'dist_moved'
 
 model_params: 
   start_date : '2022-01-01'
-  width: 10.
-  height: 10.
+  width: 5.
+  height: 5.
   model_name :  0
   tol: 0.01
   POI_file: 'None'
   time_increment: 1 # hours
+  price: 0
+  location_probs: 'inputs/location_probs.csv'
 
 agent_params: 
   EVs: 
@@ -30,14 +38,16 @@ agent_params:
     from_file: False
     num_agents: 100
     # file: 'inputs/'
-    discharge_rate: 0.01
+    discharge_rate: 0.04
     MoveType :  'loc'
     charging: False
     max_range: 1
-    speed: 0.2
+    speed: 0.5
     home_stay: 12
     work_stay: 8
     rand_stay: 3
+    completed_trip: 0
+    dist_moved: 0
   Grid_Points:
     Type: 'GP'
     grid_spacing :  20

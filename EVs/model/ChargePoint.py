@@ -28,7 +28,6 @@ class ChargePoint(Agent):
         for EV in cellmates:
             if EV.Type == 'EV' and EV.charging:
                 self.cars_charging += 1
-                EV.charge += self.charge_rate 
 
     def step(self):
         """ Charge point step behaviour """
