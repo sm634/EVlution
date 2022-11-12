@@ -1,9 +1,10 @@
-from preprocess_utils import GeoFabrikData
+from preprocess_utils import GeoLocData
 
+# instantiate the geo location data class.
+gfd = GeoLocData()
 
-# instantiate the geo fabrik data class.
-gfd = GeoFabrikData()
+gfd.get_charging_stations_data(city='Mississauga')
+charging_stations = gfd.charging_stations
 
-# retrieve the data with the appropriate transformations for places, traffic and place of interest
-toronto_poi = gfd.get_place_poi_gdf('gis_osm_places_a_free_1.shp', 'gis_osm_pois_a_free_1.shp', place='Toronto')
-toronto_traffic = gfd.get_place_traffic_gdf('gis_osm_places_a_free_1.shp', 'gis_osm_traffic_a_free_1.shp')
+place_poi = gfd.get_place_poi_gdf(place='Mississauga')
+place_traffic = gfd.get_place_traffic_gdf(place='Mississauga')
