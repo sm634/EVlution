@@ -1,7 +1,6 @@
-import pdb
-
 import geopandas as gpd
 import pandas as pd
+from preprocess_data.s3_connect import EVlutionS3Input
 
 
 class GeoLocData:
@@ -16,6 +15,7 @@ class GeoLocData:
         self.places = None
         self.traffic = None
         self.poi = None
+        self.s3_data = EVlutionS3Input()
 
     @staticmethod
     def open_shape_file(file_path):
@@ -28,17 +28,35 @@ class GeoLocData:
         """
         return gpd.read_file(file_path)
 
-    def get_charging_stations_data(self,
-                                   file_path='Data/Ontario_Electric_Charging_Stations.csv',
-                                   city=None):
+    def get_charging_stations_data(
+                                   self,
+                                   city=None,
+                                   s3=True,
+                                   file_path='preprocess_data/Data/Ontario_Electric_Charging_Stations.csv',
+                                  ):
         """
         Ontario Public Charging Stations csv file
 
         parameters:
         -----------
-            file_path: the full path to the shape file to be opened with extension .csv
+            city: str, None
+                If filtering the charging stations dataset to a particular city, insert the name of the city as
+                provided in the data.
+            s3: bool
+                If True, access the data through S3 bucket. If false, then use the file_path argument provided to read
+                the data from a local file path.
+            file_path: str
+                The full path to the charging stations data stored in a local folder.
+
+        returns
+        -------
+        A pandas DataFrame of the Ontario Electric Charging Stations Data with preprocessing steps applied.
         """
-        charging_stations = pd.read_csv(file_path)
+        if s3:
+            charging_stations = self.s3_data.get_charging_stations_data_raw()
+        else:
+            charging_stations = pd.read_csv(file_path)
+
         cols = [
             'X',
             'Y',
@@ -90,9 +108,12 @@ class GeoLocData:
         }
         return rename_dict
 
-    def get_places_gdf(self,
-                       place_file='Data/gis_osm_places_a_free_1.shp',
-                       place=None):
+    def get_places_gdf(
+                       self,
+                       place=None,
+                       s3=False,
+                       place_file='preprocess_data/Data/gis_osm_places_a_free_1.shp'
+                      ):
         """
         A function to process place shape files from GeoFabrik and filter for a particular city/area of the shapefile.
         It will also incorporate the stage at which the charging stations data is brougth in.
@@ -100,17 +121,23 @@ class GeoLocData:
 
         parameters
         ----------
-        place_file: str
-            Name of the shape file to be read, must include the .shp extension
         place: str, List[str], None
             The particular place values (names) to be filtered into. Can be None or an iterable with a list of places.
-
+        s3: bool
+            If True, access the data through S3 bucket. If false, then use the file_path argument provided to read
+            the data from a local file path.
+        place_file: str
+            Name of the shape file to be read, must include the .shp extension
         returns
         -------
         a pandas DataFrame of the place geolocation data.
         """
 
-        places = self.open_shape_file(place_file)
+        if s3:
+            places = self.s3_data.get_places_data_raw()
+        else:
+            places = self.open_shape_file(place_file)
+
         places = places.rename(columns=self.rename_common_cols('place'))
 
         # filtering for places depending on the filter of place.
@@ -133,21 +160,32 @@ class GeoLocData:
 
         self.places = places
 
-    def get_traffic_gdf(self, traffic_file='Data/gis_osm_traffic_a_free_1.shp'):
+    def get_traffic_gdf(
+                        self,
+                        s3=False,
+                        traffic_file='preprocess_data/Data/gis_osm_traffic_a_free_1.shp'
+                        ):
         """
         A function to process traffic shape files from GeoFabrik.
         Renames common column names to file specific prefixed version and adds traffic related metrics.
 
         parameters
         ----------
+        s3: bool
+            If True, access the data through S3 bucket. If false, then use the file_path argument provided to read
+            the data from a local file path.
         traffic_file: str
             Name of the shape file to be read, must include the .shp extension
 
         returns
         -------
-        a pandas DataFrame of the traffic geolocation data.
+        a geopandas DataFrame of the traffic geolocation data.
         """
-        traffic = self.open_shape_file(traffic_file)
+        if s3:
+            traffic = self.s3_data.get_traffic_data_raw()
+        else:
+            traffic = self.open_shape_file(traffic_file)
+
         traffic = traffic.rename(columns=self.rename_common_cols('traffic'))
 
         # To calculate scalars and other geometry, convert the coordinate reference system.
@@ -164,37 +202,51 @@ class GeoLocData:
 
         self.traffic = traffic
 
-    def get_poi_gdf(self, poi_file='Data/gis_osm_pois_a_free_1.shp'):
+    def get_poi_gdf(
+                    self,
+                    s3=False,
+                    poi_file='preprocess_data/Data/gis_osm_pois_a_free_1.shp'
+                    ):
         """
         A function to process points of interest shape files from GeoFabrik.
         Renames common column names to file specific prefixed version and adds traffic related metrics.
 
         parameters
         ----------
+        s3: bool
+            If True, access the data through S3 bucket. If false, then use the file_path argument provided to read
+            the data from a local file path.
         poi_file: str
             Name of the shape file to be read, must include the .shp extension
 
         returns
         -------
-        a pandas DataFrame of the place geolocation data.
+        a geopandas DataFrame of the place of interest geolocation data.
         """
-        poi = self.open_shape_file(poi_file)
+        if s3:
+            poi = self.s3_data.get_poi_data_raw()
+        else:
+            poi = self.open_shape_file(poi_file)
+
+        poi = poi.rename(columns=self.rename_common_cols('poi'))
 
         # To calculate scalars and other geometry, convert the coordinate reference system.
         poi = poi.to_crs('+proj=cea')
         poi['poi_centroids'] = poi.centroid.to_crs(epsg=4326)
         poi['poi_area'] = poi.area
-        poi = poi.rename(columns=self.rename_common_cols('poi'))
 
         poi['poi_x'] = poi.centroid.x
         poi['poi_y'] = poi.centroid.y
 
         self.poi = poi
 
-    def get_place_traffic_gdf(self, place=None):
+    def get_place_traffic_gdf(
+                              self,
+                              place=None,
+                              s3=False):
         # Get the preprocessed files for place and traffic.
-        self.get_places_gdf(place=place)
-        self.get_traffic_gdf()
+        self.get_places_gdf(place=place, s3=s3)
+        self.get_traffic_gdf(s3=s3)
 
         place_gdf = self.places
         traffic_gdf = self.traffic
@@ -209,10 +261,10 @@ class GeoLocData:
 
         return place_traffic.to_crs(epsg=4326)
 
-    def get_place_poi_gdf(self, place=None):
+    def get_place_poi_gdf(self, place=None, s3=False):
         # Get the preprocessed files for place and traffic.
-        self.get_places_gdf(place=place)
-        self.get_poi_gdf()
+        self.get_places_gdf(place=place, s3=s3)
+        self.get_poi_gdf(s3=s3)
 
         place_gdf = self.places
         poi_gdf = self.poi
