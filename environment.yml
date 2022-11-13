@@ -1,0 +1,15 @@
+name: EVlution
+dependencies:
+  - python=3.7
+  - numpy=1.21.5
+  - pandas=1.3.4
+  - scipy=1.7.3
+  - scikit-lear=1.0.2
+  - urllib3=1.26.9
+  - boto3=1.24.28
+  - Shapely=1.7.1
+  - Fiona=1.8.13.post1
+  - geopandas=0.9.0
+  - pip:
+    - seaborn=0.12.1
+    - python-decouple
