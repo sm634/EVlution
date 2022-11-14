@@ -197,8 +197,8 @@ class GeoLocData:
         # ordering to the get the biggest traffic zones.
         traffic = traffic.sort_values(by='traffic_area',
                                       ascending=False)
-        traffic['traffic_x'] = traffic.centroid.x
-        traffic['traffic_y'] = traffic.centroid.y
+        traffic['traffic_x'] = traffic.traffic_centroid.x
+        traffic['traffic_y'] = traffic.traffic_centroid.y
 
         self.traffic = traffic
 
@@ -235,8 +235,8 @@ class GeoLocData:
         poi['poi_centroids'] = poi.centroid.to_crs(epsg=4326)
         poi['poi_area'] = poi.area
 
-        poi['poi_x'] = poi.centroid.x
-        poi['poi_y'] = poi.centroid.y
+        poi['poi_x'] = poi.poi_centroids.x
+        poi['poi_y'] = poi.poi_centroids.y
 
         self.poi = poi
 
@@ -259,7 +259,7 @@ class GeoLocData:
         place_traffic = place_traffic.drop(labels=['index_right', 'index_left'],
                                            errors='ignore')
 
-        return place_traffic.to_crs(epsg=4326)
+        return place_traffic
 
     def get_place_poi_gdf(self, place=None, s3=False):
         # Get the preprocessed files for place and traffic.
@@ -277,4 +277,4 @@ class GeoLocData:
         place_poi = place_poi.drop(labels=['index_right', 'index_left'],
                                    errors='ignore')
 
-        return place_poi.to_crs(epsg=4326)
+        return place_poi
