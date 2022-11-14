@@ -13,3 +13,4 @@ dependencies:
   - pip:
     - seaborn=0.12.1
     - python-decouple
+    - Mesa=0.9.0
