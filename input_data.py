@@ -42,3 +42,6 @@ def generate_model_inputs(write_csv=False):
             'EVs/inputs/Mississauga_traffic_data.csv')
 
     return charging_stations, place_poi, place_traffic
+
+
+generate_model_inputs(write_csv=True)
