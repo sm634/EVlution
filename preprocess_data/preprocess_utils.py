@@ -1,6 +1,6 @@
 import geopandas as gpd
 import pandas as pd
-from preprocess_data.s3_connect import EVlutionS3Input
+# from preprocess_data.s3_connect import EVlutionS3Input
 
 
 class GeoLocData:
@@ -10,12 +10,13 @@ class GeoLocData:
     https://download.geofabrik.de/index.html
     """
 
-    def __init__(self):
+    def __init__(self, s3=False):
         self.charging_stations = None
         self.places = None
         self.traffic = None
         self.poi = None
-        self.s3_data = EVlutionS3Input()
+        # if s3:
+        #     self.s3_data = EVlutionS3Input()
 
     @staticmethod
     def open_shape_file(file_path):
@@ -31,7 +32,7 @@ class GeoLocData:
     def get_charging_stations_data(
                                    self,
                                    city=None,
-                                   s3=True,
+                                   s3=False,
                                    file_path='preprocess_data/Data/Ontario_Electric_Charging_Stations.csv',
                                   ):
         """
