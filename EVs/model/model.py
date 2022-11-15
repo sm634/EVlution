@@ -47,10 +47,10 @@ class EVSpaceModel(Model):
         if self.POI_file != 'None':
             self.POIs = pd.read_csv(self.POI_file).set_index('poi_name')
             self.POIs['uses'] = 0
-            self.xmin = min(self.POIs['poi_x'])-self.tol
-            self.xmax = max(self.POIs['poi_x'])+self.tol
-            self.ymin = min(self.POIs['poi_y'])-self.tol
-            self.ymax = max(self.POIs['poi_y'])+self.tol
+            self.xmin = min(self.POIs['poi_x_km'])-self.tol
+            self.xmax = max(self.POIs['poi_x_km'])+self.tol
+            self.ymin = min(self.POIs['poi_y_km'])-self.tol
+            self.ymax = max(self.POIs['poi_y_km'])+self.tol
             self.width = self.xmax - self.xmin
             self.height = self.ymax - self.ymin
 
@@ -143,7 +143,7 @@ class EVSpaceModel(Model):
         # take model_params from config file and assign them as attributes to model class
         for k,v in self.cfg['model_params'].items():
             setattr(self,k,v)
-        print(self.cfg)
+        # print(self.cfg)
 
     def gen_CPs(self):
         ''' determine charge point locations, either uniform or randomly distribute '''
@@ -152,14 +152,14 @@ class EVSpaceModel(Model):
         if isinstance(self.CP_loc, pd.DataFrame):
             self.N_Charge = len(self.CP_loc)
             names = self.CP_loc.index
-            x_pos = self.CP_loc['x'].values
-            y_pos = self.CP_loc['y'].values
+            x_pos = self.CP_loc['x_km'].values
+            y_pos = self.CP_loc['y_km'].values
         elif '.csv' in self.CP_loc:
             self.CP_locs = pd.read_csv(self.CP_loc).set_index('Station_Name')
             self.N_Charge = len(self.CP_locs)
             names = self.CP_locs.index
-            x_pos = self.CP_locs['x'].values
-            y_pos = self.CP_locs['y'].values
+            x_pos = self.CP_locs['x_km'].values
+            y_pos = self.CP_locs['y_km'].values
         elif self.CP_loc == 'uniform':
             indices = np.arange(0, self.N_Charge, dtype=float) + 0.5
             r = np.sqrt(indices/self.N_Charge)

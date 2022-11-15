@@ -54,10 +54,10 @@ agent_params:
     max_work_d: 3
     max_charge: 50 # kWh
     efficiency_rating: 3 # km / kWh
-    dist_per_step: 30 # km
+    dist_per_step: 1 # km
     home_charge_rate: 5 # kW
     work_charge_rate: 5 # kW
-    ChargePoint_charge_rate: 100 # kW
+    ChargePoint_charge_rate: 20 # kW
   Grid_Points:
     Type: 'GP'
     grid_spacing :  20

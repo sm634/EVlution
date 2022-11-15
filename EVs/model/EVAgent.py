@@ -32,18 +32,18 @@ class EVAgent(Agent):
         if len(self.model.POIs)>3:
             #fix later to be less hacky
             rand_locs = self.model.POIs.sample(frac=1,random_state=np.random.randint(10000)).copy()
-            self.locations = {  'home':     (rand_locs.iloc[0]['poi_x'], rand_locs.iloc[0]['poi_y']),
-                                'random':   (rand_locs.iloc[1]['poi_x'], rand_locs.iloc[1]['poi_y']),
+            self.locations = {  'home':     (rand_locs.iloc[0]['poi_x_km'], rand_locs.iloc[0]['poi_y_km']),
+                                'random':   (rand_locs.iloc[1]['poi_x_km'], rand_locs.iloc[1]['poi_y_km']),
                         }
-            rand_locs['dx'] = rand_locs['poi_x']-rand_locs['poi_x'].iloc[0]
-            rand_locs['dy'] = rand_locs['poi_y']-rand_locs['poi_y'].iloc[0]
+            rand_locs['dx'] = rand_locs['poi_x_km']-rand_locs['poi_x_km'].iloc[0]
+            rand_locs['dy'] = rand_locs['poi_y_km']-rand_locs['poi_y_km'].iloc[0]
             rand_locs['d'] = (rand_locs['dx']**2 + rand_locs['dy']**2)**0.5 / self.dist_per_step
             # idxs = list(rand_locs.index[:2])
 
             poss_work_locs = rand_locs[rand_locs['d']<self.max_work_d]
             if len(poss_work_locs)>1:
                 work_loc = poss_work_locs.iloc[0]
-                self.locations['work'] = (work_loc['poi_x'],work_loc['poi_y'])
+                self.locations['work'] = (work_loc['poi_x_km'],work_loc['poi_y_km'])
                 # idxs += list(poss_work_locs.index[0])
                 
             # self.model.POIs.loc[idxs,'uses'] += 1
@@ -139,7 +139,7 @@ class EVAgent(Agent):
         if self.last_location =='random':
             if len(self.model.POIs)>3:
                 rand_locs = self.model.POIs.sample(1,weights=self.model.POIs['poi_area'],random_state=np.random.randint(10000))
-                self.locations['random'] = (rand_locs.iloc[0]['poi_x'], rand_locs.iloc[0]['poi_y'])
+                self.locations['random'] = (rand_locs.iloc[0]['poi_x_km'], rand_locs.iloc[0]['poi_y_km'])
                 self.model.POIs.loc[rand_locs.index,'uses'] += 1
             else:
                 self.locations['random'] = (np.random.random() * self.model.width,
