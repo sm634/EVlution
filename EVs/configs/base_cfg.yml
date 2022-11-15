@@ -1,6 +1,8 @@
 output:
   output_dir: 'data//'
   model_reporters: 
+    model_name: 'model_name'
+    COM: 'COM'
     av_charge: 'av_charge'
     completed_trip: 'completed_trip'
     dead_cars: 'dead_cars'
@@ -20,13 +22,19 @@ output:
     moving: 'moving'
     completed_trip: 'completed_trip'
     dist_moved: 'dist_moved'
-
+    charge_load: 'charge_load'
+  save_data:
+    model: True
+    EVs: False
+    CPs: False
+    GPs: False
+    
 model_params: 
   start_date : '2022-01-01'
   seed: 'None'
   width: 200.
   height: 200.
-  model_name :  0
+  model_name :  'test_location'
   tol: 0.01
   POI_file: 'inputs/POIs.csv'
   Traffic_file: 'None'
@@ -54,10 +62,12 @@ agent_params:
     max_work_d: 3
     max_charge: 50 # kWh
     efficiency_rating: 3 # km / kWh
-    dist_per_step: 1 # km
+    dist_per_step: 20 # km
     home_charge_rate: 5 # kW
     work_charge_rate: 5 # kW
     ChargePoint_charge_rate: 20 # kW
+    go_to_charge_pcnt: 0.2
+    next_point_charge: 0.5
   Grid_Points:
     Type: 'GP'
     grid_spacing :  20

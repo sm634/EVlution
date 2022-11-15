@@ -1,6 +1,7 @@
 model_params: 
   POI_file: 'inputs/Mississauga_poi_data.csv'
   Traffic_file: 'None'
+  model_name :  'Mississauga'
 
 agent_params: 
   EVs: 

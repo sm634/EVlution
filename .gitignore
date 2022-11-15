@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 */__pycache__/
 *.pyc
-EVs/Data/*
+EVs/Data/*.csv
 
 # C extensions
 *.so

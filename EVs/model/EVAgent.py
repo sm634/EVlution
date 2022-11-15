@@ -21,9 +21,9 @@ class EVAgent(Agent):
         for k,v in model.cfg['agent_params']['EVs'].items():
             setattr(self,k,v)
         
-        self.charge_pcnt = np.random.uniform(0.5,1)
-        self.charge = self.charge_pcnt * self.max_charge
-        self.range = self.charge * self.efficiency_rating
+        self.charge_pcnt = np.random.uniform(0.5,1) # % charge 
+        self.charge = self.charge_pcnt * self.max_charge # kWh
+        self.range = self.charge * self.efficiency_rating # max dist in km
 
         self.initialise_locs()
 
@@ -116,7 +116,7 @@ class EVAgent(Agent):
         """ how to determine where to go next """
         # if self.charging: # not move if still charging
         #     pass
-        if self.charge_pcnt > 0.5: # if still got plenty of charge then select new location
+        if self.charge_pcnt > self.next_point_charge: # if still got plenty of charge then select new location
             locations_names_new = self.update_possible_locations()
             self.next_location = self.choose_new_location(locations_names_new) 
         else:  # if at destination but low on charge then next stop will be to find charging point
@@ -166,16 +166,6 @@ class EVAgent(Agent):
         self.locations['charge'] = self.model.charge_locations[best_CL]
         self.next_location = 'charge'
 
-    def check_charge(self):
-        """ if made it to a charge point then charge untill battery fully charged
-            Charges via the ChargeEV function in the chargePoint code """
-        if self.charge >= 1:  # if fully charged then can move on to new location
-            self.charge = 1
-            self.charging = False
-            self.wait = 0  # can now move this step
-        else: 
-            self.wait = 1  # will not move this step
-
     def agent_schedule(self):
         """ Just got to new location. decide how long to wait and where to go next """
         if self.last_location == 'home': 
@@ -193,38 +183,60 @@ class EVAgent(Agent):
 
     def step(self):
         """ key agent step, can add functions in here for agent behaviours """
-        self.dist_moved = 0
-        self.range = self.charge * self.efficiency_rating
-        self.charge_pcnt = self.charge / self.max_charge
+        
+        self.decide_to_charge()
 
-        #if at home, work or charging point then could be charging. decide on if want to via price
-        if not self.moving and self.charge_pcnt < 1:
-            if self.last_location == 'home' and self.home_charge_rate != 0:
-                if self.price_function():
-                    self.charging = True
-                    self.charge_load = self.home_charge_rate  # slow charge
-                    self.charge += self.charge_load
-            elif self.last_location == 'work' and self.work_charge_rate != 0 :
-                if self.price_function():
-                    self.charging = True
-                    self.charge_load = self.work_charge_rate  # slow charge
-                    self.charge += self.charge_load
-            # if at charging point and not moving then charge from point and check if full
-            elif self.last_location == 'charge':
-                self.charging = True
-                self.charge_load = self.ChargePoint_charge_rate  # fast charge, set via charge point attr
-                self.check_charge()
-                self.charge += self.charge_load
-
-       
         if self.wait > 0:  #if still waiting then continue to wait
             self.wait -= 1
         else:  #if not waiting then can move
             if not self.moving:         # if not currently moving then choose new location and start moving
                 self.get_new_location()
-            elif self.charge_pcnt <= 0.2:    # if charge getting low, head straight to the nearest charge point
+            elif self.charge_pcnt <= self.go_to_charge_pcnt:    # if charge getting low, head straight to the nearest charge point
                 self.find_closest_charge()
             self.moving = True
             self.charging = False
             self.move()
+    
+    def check_charge(self):
+        """ if made it to a charge point then charge untill battery fully charged
+            Charges via the ChargeEV function in the chargePoint code """
+        if self.charge >= self.max_charge:  # if fully charged then can move on to new location
+            self.charge = self.max_charge
+            self.charging = False
+            self.wait = 0  # can now move this step
+        else: 
+            self.wait = 1  # will not move this step
+            self.charging = True
+            
+    def decide_to_charge(self):
+        self.dist_moved = 0
+        self.charge_load = 0 
+        self.range = self.charge * self.efficiency_rating
+        self.charge_pcnt = self.charge / self.max_charge
+
+        #if at home, work or charging point then could be charging. decide on if want to via price
+        if self.moving:
+            return 
+        if self.charge_pcnt >= 1:
+            self.charge = self.max_charge
+            self.charge_pcnt = 1 
+            self.charging = False
+            return 
  
+        if self.last_location == 'home' and self.home_charge_rate != 0:
+            if self.price_function():
+                self.charging = True
+                self.charge_load = self.home_charge_rate  # slow charge
+        elif self.last_location == 'work' and self.work_charge_rate != 0 :
+            if self.price_function():
+                self.charging = True
+                self.charge_load = self.work_charge_rate  # slow charge
+        # if at charging point and not moving then charge from point and check if full
+        elif self.last_location == 'charge':
+            self.check_charge()
+            if self.charging:
+                self.charge_load = self.ChargePoint_charge_rate  # fast charge, set via charge point attr
+                
+        charge_req = self.max_charge - self.charge
+        self.charge_load = min(self.charge_load,charge_req)
+        self.charge += self.charge_load

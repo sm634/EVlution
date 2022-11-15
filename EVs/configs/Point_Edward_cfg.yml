@@ -1,6 +1,7 @@
 model_params: 
   POI_file: 'inputs/Point Edward_poi_data.csv'
   Traffic_file: 'None'
+  model_name :  'Point Edward'
 
 agent_params: 
   EVs: 

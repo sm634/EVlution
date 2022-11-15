@@ -50,10 +50,14 @@ class EVSpaceModel(Model):
             self.width = self.xmax - self.xmin
             self.height = self.ymax - self.ymin
 
+            x = (max(self.POIs['poi_x'])+min(self.POIs['poi_x']))/2
+            y = (max(self.POIs['poi_y'])+min(self.POIs['poi_y']))/2
+            self.COM = (x,y)
         else:
             self.POIs = []
             self.xmin, self.ymin = -self.tol, -self.tol
             self.xmax, self.ymax = self.width, self.height
+            self.COM = (self.xmin+self.width/2, self.ymin+self.height/2)
         
         self.space = ContinuousSpace(self.xmax, self.ymax, False,
                                         x_min=self.xmin,y_min=self.ymin) 
@@ -260,14 +264,20 @@ class EVSpaceModel(Model):
     def save(self):
         """ save out model/agent dataframes if given model name """
         if self.model_name != 0:
+            self.model_name += f'_{self.seed}'
             mdf = self.datacollector.get_model_vars_dataframe()
-            adf = self.datacollector.get_agent_vars_dataframe()
             
-            mdf.to_csv('Data/mdf_{}.csv'.format(self.model_name))            
-            adf.to_csv('Data/adf_{}.csv'.format(self.model_name))
+            if self.cfg['output']['save_data']['model']:
+                mdf.to_csv('Data/mdf_{}.csv'.format(self.model_name))   
+                     
+            if self.cfg['output']['save_data']['EVs']:
+                adf = self.datacollector.get_agent_vars_dataframe()
+                adf.to_csv('Data/adf_{}.csv'.format(self.model_name))
 
-            adf = self.datacollector_CP.get_agent_vars_dataframe()
-            adf.to_csv('Data/adf_CP_{}.csv'.format(self.model_name))
+            if self.cfg['output']['save_data']['CPs']:
+                adf = self.datacollector_CP.get_agent_vars_dataframe()
+                adf.to_csv('Data/adf_CP_{}.csv'.format(self.model_name))
 
-            adf = self.datacollector_gridpoints.get_agent_vars_dataframe()
-            adf.to_csv('Data/adf_GP_{}.csv'.format(self.model_name))
+            if self.cfg['output']['save_data']['GPs']:
+                adf = self.datacollector_gridpoints.get_agent_vars_dataframe()
+                adf.to_csv('Data/adf_GP_{}.csv'.format(self.model_name))
