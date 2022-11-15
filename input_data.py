@@ -6,14 +6,14 @@ Uses the preprocess.preprocess_utils module and it's GeoLocData class to get dat
 (iii) downloaded from EVlution S3 bucket.
 """
 
-from preprocess_data.preprocess_utils import GeoLocData
+from preprocess_data.geo_location_formatter import GeoLocData
 
 
 # instantiate the geo location data class.
 def generate_model_inputs(write_csv=False):
     gfd = GeoLocData()
 
-    area = 'Mississauga'
+    area = 'Point Edward'
     gfd.get_charging_stations_data(city=area)
     charging_stations = gfd.charging_stations
 
@@ -21,9 +21,9 @@ def generate_model_inputs(write_csv=False):
     place_traffic = gfd.get_place_traffic_gdf(place=area)
 
     # filter out the output dataframes to only keep relevant columns.
-    charging_cols = ['x', 'y', 'Station_Name', 'City']
-    place_poi_cols = ['poi_x', 'poi_y', 'poi_name', 'poi_area', 'place_name']
-    place_traffic_cols = ['traffic_x', 'traffic_y', 'traffic_area', 'place_name']
+    charging_cols = ['x', 'y', 'x_km', 'y_km', 'Station_Name', 'City']
+    place_poi_cols = ['poi_x', 'poi_y', 'poi_x_km', 'poi_y_km', 'poi_name', 'poi_area', 'place_name']
+    place_traffic_cols = ['traffic_x', 'traffic_y', 'traffic_x_km', 'traffic_y_km', 'traffic_area', 'place_name']
     charging_stations = charging_stations[charging_cols]
     place_poi = place_poi[place_poi_cols]
     place_traffic = place_traffic[place_traffic_cols]
