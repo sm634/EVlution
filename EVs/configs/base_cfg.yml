@@ -31,8 +31,8 @@ model_params:
   Traffic_file: 'None'
   time_increment: 1 # hours
   price: 0
-  location_probs_weekday: 'inputs/location_probs.csv'
-  location_probs_weekend: 'inputs/location_probs.csv'
+  location_probs_weekday: 'inputs/location_probs_weekday.csv'
+  location_probs_weekend: 'inputs/location_probs_weekend.csv'
 
 agent_params: 
   EVs: 
@@ -45,9 +45,9 @@ agent_params:
     charging: False
     max_range: 1
     speed: 2
-    home_stay: 10
-    work_stay: 8
-    rand_stay: 3
+    home_stay: [15,10]
+    work_stay: [6,8]
+    rand_stay: [6,3]
     completed_trip: 0
     dist_moved: 0
     max_work_d: 3

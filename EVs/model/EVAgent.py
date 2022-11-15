@@ -178,11 +178,11 @@ class EVAgent(Agent):
     def agent_schedule(self):
         """ Just got to new location. decide how long to wait and where to go next """
         if self.last_location == 'home': 
-            self.wait = np.random.normal(self.home_stay,1)
+            self.wait = np.random.normal(self.home_stay[self.model.business_day],1)
         if self.last_location == 'work':
-            self.wait = np.random.normal(self.work_stay,1)
+            self.wait = np.random.normal(self.work_stay[self.model.business_day],1)
         if self.last_location == 'random':
-            self.wait = np.random.normal(self.rand_stay,1)
+            self.wait = np.random.normal(self.rand_stay[self.model.business_day],1)
         self.wait = round(self.wait)
 
     def price_function(self):
