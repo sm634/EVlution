@@ -29,36 +29,54 @@ def generate_model_inputs(write_csv=False, filter=True):
     place_traffic = place_traffic[place_traffic_cols]
 
     if filter:
-        x_min_1 = -90
-        x_max_1 = -85
-        x_min_2 = -80
-        x_max_2 = -75
+        x_min_1 = -81.58
+        x_max_1 = -79.01
+        x_min_2 = -76.94
+        x_max_2 = -74.09
+        y_min_1 = 45.674
+        y_max_1 = 46.63
+        y_min_2 = 44.87
+        y_max_2 = 45.41
         place_poi_1 = place_poi[
             (place_poi.poi_x >= x_min_1) &
-            (place_poi.poi_x <= x_max_1)
+            (place_poi.poi_x <= x_max_1) &
+            (place_poi.poi_y >= y_min_1) &
+            (place_poi.poi_y <= y_max_1)
             ]
 
         place_poi_2 = place_poi[
             (place_poi.poi_x >= x_min_2) &
-            (place_poi.poi_x <= x_max_2)
+            (place_poi.poi_x <= x_max_2) &
+            (place_poi.poi_y >= y_min_2) &
+            (place_poi.poi_y <= y_max_2)
             ]
         charging_stations_1 = charging_stations[
             (charging_stations.x >= x_min_1) &
-            (charging_stations.x <= x_max_1)
+            (charging_stations.x <= x_max_1) &
+            (charging_stations.y >= y_min_1) &
+            (charging_stations.y <= y_max_1)
             ]
 
         charging_stations_2 = charging_stations[
             (charging_stations.x >= x_min_2) &
-            (charging_stations.x <= x_max_2)
+            (charging_stations.x <= x_max_2) &
+            (charging_stations.y >= y_min_2) &
+            (charging_stations.y <= y_max_2)
             ]
         place_traffic_1 = place_traffic[
             (place_traffic.traffic_x >= x_min_1) &
-            (place_traffic.traffic_x <= x_max_1)
+            (place_traffic.traffic_x <= x_max_1) &
+            (place_traffic.traffic_y >= y_min_1) &
+            (place_traffic.traffic_y <= y_max_1)
+
             ]
 
         place_traffic_2 = place_traffic[
             (place_traffic.traffic_x >= x_min_2) &
-            (place_traffic.traffic_x <= x_max_2)
+            (place_traffic.traffic_x <= x_max_2) &
+            (place_traffic.traffic_y >= y_min_2) &
+            (place_traffic.traffic_y <= y_max_2)
+
             ]
 
         if write_csv:
