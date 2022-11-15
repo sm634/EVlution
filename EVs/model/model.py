@@ -10,6 +10,8 @@ import itertools
 import yaml
 from .datacollection import DataCollector
 import datetime 
+import collections.abc
+
 
 class EVSpaceModel(Model):
     """ Electric Vehical Model, where cars drive around between locations then pull into charge points """
@@ -17,7 +19,14 @@ class EVSpaceModel(Model):
         """ initalisation of the model, set up agent space, agents and collection modules"""
 
         # Read in configuration files from yaml. If any additional configs then will overwrite base
+
         self.read_configs(kwargs)
+
+        if self.seed == 'None':
+            self.seed = np.random.randint(10000)
+
+        self.random.seed(self.seed)
+        np.random.seed(self.seed)
 
         self.location_probs_weekday = pd.read_csv(self.location_probs_weekday).set_index('hour')    
         self.location_probs_weekend = pd.read_csv(self.location_probs_weekend).set_index('hour')    
@@ -87,40 +96,49 @@ class EVSpaceModel(Model):
         self.datacollector_gridpoints.collect(self)
         self.running = True
 
+    def update(self,d, u):
+        for k, v in u.items():
+            if isinstance(v, collections.abc.Mapping):
+                d[k] = self.update(d.get(k, {}), v)
+            else:
+                d[k] = v
+        return d
 
     def read_configs(self,kwargs):
         """ Read in configuation parameters from file given to set up model and agents"""
 
-        # firstly read in config file if given, else take base_config.yml 
-        # if 'cfg' in kwargs.keys():
-        #     cfg_file = kwargs['cfg']
-        # else:
+        # read in base config to update all params in there first
         cfg_file = 'configs/base_cfg.yml'
-        
         with open(cfg_file,'r') as ymlfile:
             self.cfg = yaml.safe_load(ymlfile)
-        
-        #loops through user set params and assigns them to the 
+            # if additional config file given then overwrite all vals in the new config over the base configs
+            # note new config will just overwrite what is there
+        if 'cfg' in kwargs.keys():
+            if kwargs['cfg'] != 'None':
+                cfg_file = kwargs['cfg']
+                with open(cfg_file,'r') as ymlfile:
+                    cfg_updates = yaml.safe_load(ymlfile)
+                self.cfg = self.update(self.cfg, cfg_updates)
+                # self.cfg.update(cfg_updates)
+
+        # loops through user set params and overwrites congif in particular areas
         # any additional key word arguments given in modle run instance will overwrite any params from the config file.
         # this is how we can use the vis tool to update params
         for key, val in kwargs.items():
-            if 'ModelP_' in key:
+            if 'ModelP_' in key and val != 'base':
                 key_new = key.replace("ModelP_", "")
                 self.cfg['model_params'][key_new] = val
-            elif 'EVP_' in key:
+            elif 'EVP_' in key and val != 'base':
                 key_new = key.replace("EVP_", "")
                 self.cfg['agent_params']['EVs'][key_new] = val
-            elif 'ChargeP_' in key:
+            elif 'ChargeP_' in key and val != 'base':
                 key_new = key.replace("ChargeP_", "")
                 self.cfg['agent_params']['Charge_Points'][key_new] = val
-        # print(self.cfg)
-        # for k,v in kwargs.items(): # superseeded
-        #     setattr(self,k,v)
                 
         # take model_params from config file and assign them as attributes to model class
         for k,v in self.cfg['model_params'].items():
             setattr(self,k,v)
-        
+        print(self.cfg)
 
     def gen_CPs(self):
         ''' determine charge point locations, either uniform or randomly distribute '''

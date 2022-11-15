@@ -46,6 +46,15 @@ def agent_portrayal(agent):
         if agent.unique_id == 0:
             portrayal["Layer"] = 2
             portrayal["r"] = 10
+            if not agent.moving:
+                if agent.last_location =='home':
+                    portrayal["Color"] = "pink"
+                if agent.last_location =='work':
+                    portrayal["Color"] = "yellow"
+                if agent.last_location =='charge':
+                    portrayal["Color"] = "black"
+                if agent.last_location =='random':
+                    portrayal["Color"] = "teal"
 
     return portrayal
 
@@ -73,72 +82,88 @@ model_params = {
     "ModelP_POI_file": UserSettableParameter(
         "choice", 
         'POIs', 
-        value='None',
-        choices=['None','inputs/POIs.csv','inputs/Mississauga_poi_data.csv'],
+        value='base',
+        choices=['base','None','inputs/POIs.csv','inputs/Mississauga_poi_data.csv'],
         description="How to distribute EV POIs",
     ),
-    "ModelP_width": UserSettableParameter(
-        "slider", #type of button
-        "width", # name
-        10., # inital
-        5., # min
-        50., # max
-        1., # increment
-        description="width",
-    ),
-    "ModelP_height": UserSettableParameter(
-        "slider", #type of button
-        "height", # name
-        10., # inital
-        5., # min
-        50., # max
-        1., # increment
-        description="height",
+    "cfg": UserSettableParameter(
+        "choice", 
+        'Config File', 
+        value='None',
+        choices=['None','configs/Mississauga_cfg.yml','configs/Point_Edward_cfg.yml'],
+        description="How to distribute EV POIs",
     ),
     "xx_ev_title": UserSettableParameter('static_text', value="Electric Vehical Parameters"),
     "EVP_num_agents": UserSettableParameter(
-        "slider", #type of button
-        "Number of agents", # name
-        100, # inital
-        10, # min
-        1000, # max
-        10, # increment
-        description="Choose how many agents to include in the model",
+        # "slider", #type of button
+        # "Number of agents", # name
+        # 100, # inital
+        # 10, # min
+        # 1000, # max
+        # 10, # increment
+        # description="Choose how many agents to include in the model",
+
+        "choice", 
+        'Number of agents', 
+        value='base',
+        choices=['base',100, 500, 1000, 2000],
+        # description="How to distribute EV POIs",
     ),
     "EVP_speed": UserSettableParameter(
-        "slider",
-        "Speed of Movement",
-        .2,
-        0,
-        2,
-        0.1,
-        description="Speed agents can move each step",
+        # "slider",
+        # "Speed of Movement",
+        # .2,
+        # 0,
+        # 2,
+        # 0.1,
+        # description="Speed agents can move each step",
+
+
+        "choice", 
+        'Speed of Movement', 
+        value='base',
+        choices=['base',0.01,0.1,0.2,0.5,1,10,50],
+        # description="How to distribute EV POIs",
     ),
     "EVP_discharge_rate": UserSettableParameter(
-        "slider",
-        "discharge_rate",
-        0.01,
-        0.01,
-        0.2,
-        0.01,
-        description="discharge_rate",
+        # "slider",
+        # "discharge_rate",
+        # 0.01,
+        # 0.01,
+        # 0.2,
+        # 0.01,
+        # description="discharge_rate",
+
+        
+        "choice", 
+        'discharge_rate', 
+        value='base',
+        choices=['base',0.01,0.05,0.1,0.2,0.5,1],
+        # description="How to distribute EV POIs",
     ),
     
     "xx_charge_title": UserSettableParameter('static_text', value="CP Parameters"),
     "ChargeP_N_Charge": UserSettableParameter(
-        "slider", #type of button
-        "Number of Charge Points", # name
-        10, # inital
-        1, # min
-        50, # max
-        1, # increment
-        description="Choose how many Charge points to include in the model",
+        # "slider", #type of button
+        # "Number of Charge Points", # name
+        # 10, # inital
+        # 1, # min
+        # 50, # max
+        # 1, # increment
+        # description="Choose how many Charge points to include in the model",
+
+        
+        "choice", 
+        'Number of Charge Points', 
+        value='base',
+        choices=['base',1,5,10,25,50,100],
+        # description="How to distribute EV POIs",
     ),
     "ChargeP_CP_loc": UserSettableParameter(
         "choice", 
         'Charge Point Distribution', 
-        value='random',
-        choices=['random', 'uniform','inputs/CP_locs.csv','inputs/Mississauga_charging_stations.csv'],
+        value='base',
+        choices=['base','random', 'uniform','inputs/CP_locs.csv','inputs/Mississauga_charging_stations.csv'],
         description="How to distribute charge points",
     ),
 }

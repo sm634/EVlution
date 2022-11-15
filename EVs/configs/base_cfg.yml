@@ -23,16 +23,17 @@ output:
 
 model_params: 
   start_date : '2022-01-01'
-  width: 5.
-  height: 5.
+  seed: 'None'
+  width: 200.
+  height: 200.
   model_name :  0
   tol: 0.01
   POI_file: 'inputs/POIs.csv'
   Traffic_file: 'None'
   time_increment: 1 # hours
   price: 0
-  location_probs_weekday: 'inputs/location_probs.csv'
-  location_probs_weekend: 'inputs/location_probs.csv'
+  location_probs_weekday: 'inputs/location_probs_weekday.csv'
+  location_probs_weekend: 'inputs/location_probs_weekend.csv'
 
 agent_params: 
   EVs: 
@@ -43,17 +44,18 @@ agent_params:
     discharge_rate: 0.2
     MoveType :  'loc'
     charging: False
-    max_range: 1
-    speed: 2
     home_stay: 10
     work_stay: 8
     rand_stay: 3
     completed_trip: 0
     dist_moved: 0
     max_work_d: 3
-    home_charge_rate: 0.05
-    work_charge_rate: 0.05
-    ChargePoint_charge_rate: 0.2
+    max_charge: 50 # kWh
+    efficiency_rating: 3 # km / kWh
+    dist_per_step: 30 # km
+    home_charge_rate: 5 # kW
+    work_charge_rate: 5 # kW
+    ChargePoint_charge_rate: 100 # kW
   Grid_Points:
     Type: 'GP'
     grid_spacing :  20
@@ -66,5 +68,3 @@ agent_params:
     charge_rate :  0.2
     cars_charging: 0
     full: False
-
-

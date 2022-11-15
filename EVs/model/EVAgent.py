@@ -21,7 +21,9 @@ class EVAgent(Agent):
         for k,v in model.cfg['agent_params']['EVs'].items():
             setattr(self,k,v)
         
-        self.charge = np.random.uniform(0.5,1)*self.max_range
+        self.charge_pcnt = np.random.uniform(0.5,1)
+        self.charge = self.charge_pcnt * self.max_charge
+        self.range = self.charge * self.efficiency_rating
 
         self.initialise_locs()
 
@@ -29,13 +31,13 @@ class EVAgent(Agent):
         #set up starting locations for the EV agent
         if len(self.model.POIs)>3:
             #fix later to be less hacky
-            rand_locs = self.model.POIs.sample(frac=1).copy()
+            rand_locs = self.model.POIs.sample(frac=1,random_state=np.random.randint(10000)).copy()
             self.locations = {  'home':     (rand_locs.iloc[0]['poi_x'], rand_locs.iloc[0]['poi_y']),
                                 'random':   (rand_locs.iloc[1]['poi_x'], rand_locs.iloc[1]['poi_y']),
                         }
             rand_locs['dx'] = rand_locs['poi_x']-rand_locs['poi_x'].iloc[0]
             rand_locs['dy'] = rand_locs['poi_y']-rand_locs['poi_y'].iloc[0]
-            rand_locs['d'] = (rand_locs['dx']**2 + rand_locs['dy']**2)**0.5 / self.speed
+            rand_locs['d'] = (rand_locs['dx']**2 + rand_locs['dy']**2)**0.5 / self.dist_per_step
             # idxs = list(rand_locs.index[:2])
 
             poss_work_locs = rand_locs[rand_locs['d']<self.max_work_d]
@@ -79,14 +81,14 @@ class EVAgent(Agent):
             # find shortest path and move down it
             # move to network model only leave a node if can get to next
             # optimse route based on charging points
-
+        # todo work out if agent can make it to location
         self.moving = True
         # location based movement, EVs move toward a location, when they get there they get a new location
         pi = self.pos
         pf = self.locations[self.next_location]
         D, x_d, y_d = self.get_distance(pi, pf) # find distance and direction to location
 
-        if D < self.speed: # if can reach destination this step
+        if D < self.dist_per_step: # if can reach destination this step
             # todo if at destination = True
             self.dist_moved = D
             new_position = pf
@@ -99,15 +101,14 @@ class EVAgent(Agent):
                 self.model.completed_trip += 1 # reached destination
                 self.completed_trip += 1
                 self.agent_schedule()
-                
         else: 
-            self.dist_moved = self.speed
+            self.dist_moved = self.dist_per_step
             theta = math.atan(abs(y_d/x_d))
-            self.dx = math.cos(theta) * self.speed * np.sign(x_d)
-            self.dy = math.sin(theta) * self.speed * np.sign(y_d)
+            self.dx = math.cos(theta) * self.dist_per_step * np.sign(x_d)
+            self.dy = math.sin(theta) * self.dist_per_step * np.sign(y_d)
             new_position = (pi[0] + self.dx, pi[1] + self.dy) # move toward destination 
             
-        self.charge -= self.discharge_rate # moving uses charge at rate = discharge_rate  # change to distance travelled
+        self.charge -= self.dist_moved / self.efficiency_rating # moving uses charge at rate = discharge_rate  # change to distance travelled
         self.model.space.move_agent(self, new_position) # move agent
         self.pos = new_position # update postion
 
@@ -115,7 +116,7 @@ class EVAgent(Agent):
         """ how to determine where to go next """
         # if self.charging: # not move if still charging
         #     pass
-        if self.charge > 0.5: # if still got plenty of charge then select new location
+        if self.charge_pcnt > 0.5: # if still got plenty of charge then select new location
             locations_names_new = self.update_possible_locations()
             self.next_location = self.choose_new_location(locations_names_new) 
         else:  # if at destination but low on charge then next stop will be to find charging point
@@ -137,7 +138,7 @@ class EVAgent(Agent):
         # update random location if just been to one, cant be same as before, choose new POI
         if self.last_location =='random':
             if len(self.model.POIs)>3:
-                rand_locs = self.model.POIs.sample(1,weights=self.model.POIs['poi_area'])
+                rand_locs = self.model.POIs.sample(1,weights=self.model.POIs['poi_area'],random_state=np.random.randint(10000))
                 self.locations['random'] = (rand_locs.iloc[0]['poi_x'], rand_locs.iloc[0]['poi_y'])
                 self.model.POIs.loc[rand_locs.index,'uses'] += 1
             else:
@@ -186,16 +187,18 @@ class EVAgent(Agent):
         self.wait = round(self.wait)
 
     def price_function(self):
-        charge_need = (self.max_range - self.charge)/self.charge
+        charge_need = 1 - self.charge_pcnt
         choice_charge = True if charge_need > self.model.price else False
         return True # choice_charge
 
     def step(self):
         """ key agent step, can add functions in here for agent behaviours """
         self.dist_moved = 0
+        self.range = self.charge * self.efficiency_rating
+        self.charge_pcnt = self.charge / self.max_charge
 
         #if at home, work or charging point then could be charging. decide on if want to via price
-        if not self.moving and self.charge < 1:
+        if not self.moving and self.charge_pcnt < 1:
             if self.last_location == 'home' and self.home_charge_rate != 0:
                 if self.price_function():
                     self.charging = True
@@ -219,7 +222,7 @@ class EVAgent(Agent):
         else:  #if not waiting then can move
             if not self.moving:         # if not currently moving then choose new location and start moving
                 self.get_new_location()
-            elif self.charge <= 0.2:    # if charge getting low, head straight to the nearest charge point
+            elif self.charge_pcnt <= 0.2:    # if charge getting low, head straight to the nearest charge point
                 self.find_closest_charge()
             self.moving = True
             self.charging = False
