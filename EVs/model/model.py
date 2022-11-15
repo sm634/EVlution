@@ -19,8 +19,11 @@ class EVSpaceModel(Model):
         # Read in configuration files from yaml. If any additional configs then will overwrite base
         self.read_configs(kwargs)
 
-        self.location_probs = pd.read_csv(self.location_probs).set_index('hour')    
+        self.location_probs_weekday = pd.read_csv(self.location_probs_weekday).set_index('hour')    
+        self.location_probs_weekend = pd.read_csv(self.location_probs_weekend).set_index('hour')    
         self.date_time = pd.to_datetime(self.start_date)
+
+        self.get_loc_probs()
 
         # set up model space
         # could change to newtwork model with graph as road netowrk
@@ -28,12 +31,12 @@ class EVSpaceModel(Model):
 
         # todo set up POI agents which EVs then choose which they want to go to
         if self.POI_file != 'None':
-            self.POIs = pd.read_csv(self.POI_file).set_index('id')
+            self.POIs = pd.read_csv(self.POI_file).set_index('poi_name')
             self.POIs['uses'] = 0
-            self.xmin = min(self.POIs['x'])-self.tol
-            self.xmax = max(self.POIs['x'])+self.tol
-            self.ymin = min(self.POIs['y'])-self.tol
-            self.ymax = max(self.POIs['y'])+self.tol
+            self.xmin = min(self.POIs['poi_x'])-self.tol
+            self.xmax = max(self.POIs['poi_x'])+self.tol
+            self.ymin = min(self.POIs['poi_y'])-self.tol
+            self.ymax = max(self.POIs['poi_y'])+self.tol
             self.width = self.xmax - self.xmin
             self.height = self.ymax - self.ymin
 
@@ -129,7 +132,7 @@ class EVSpaceModel(Model):
             x_pos = self.CP_loc['x'].values
             y_pos = self.CP_loc['y'].values
         elif '.csv' in self.CP_loc:
-            self.CP_locs = pd.read_csv(self.CP_loc).set_index('id')
+            self.CP_locs = pd.read_csv(self.CP_loc).set_index('Station_Name')
             self.N_Charge = len(self.CP_locs)
             names = self.CP_locs.index
             x_pos = self.CP_locs['x'].values
@@ -174,9 +177,20 @@ class EVSpaceModel(Model):
                 # Add the agent to a random space
                 self.space.place_agent(a, a.pos)
 
+    def is_business_day(self,date):
+        return bool(len(pd.bdate_range(date, date)))
+
+    def get_loc_probs(self):
+        if self.is_business_day(self.date_time):
+            self.loc_probs_hour = self.location_probs_weekday.loc[self.date_time.hour].to_dict()
+        else:
+            self.loc_probs_hour = self.location_probs_weekend.loc[self.date_time.hour].to_dict()
+
+
     def step(self):
         """ This is the key model function which is run once each step. Here we loop through the agent schedule, which performs each agent step """
         self.date_time += datetime.timedelta(hours=self.time_increment)
+        self.get_loc_probs()
         self.completed_trip = 0 
         self.schedule.step()
         self.schedule_CP.step()

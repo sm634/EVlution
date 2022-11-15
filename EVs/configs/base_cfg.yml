@@ -28,9 +28,11 @@ model_params:
   model_name :  0
   tol: 0.01
   POI_file: 'inputs/POIs.csv'
+  Traffic_file: 'None'
   time_increment: 1 # hours
   price: 0
-  location_probs: 'inputs/location_probs.csv'
+  location_probs_weekday: 'inputs/location_probs.csv'
+  location_probs_weekend: 'inputs/location_probs.csv'
 
 agent_params: 
   EVs: 

@@ -30,18 +30,18 @@ class EVAgent(Agent):
         if len(self.model.POIs)>3:
             #fix later to be less hacky
             rand_locs = self.model.POIs.sample(frac=1).copy()
-            self.locations = {  'home':     (rand_locs.iloc[0].x, rand_locs.iloc[0].y),
-                                'random':   (rand_locs.iloc[1].x, rand_locs.iloc[1].y),
+            self.locations = {  'home':     (rand_locs.iloc[0]['poi_x'], rand_locs.iloc[0]['poi_y']),
+                                'random':   (rand_locs.iloc[1]['poi_x'], rand_locs.iloc[1]['poi_y']),
                         }
-            rand_locs['dx'] = rand_locs['x']-rand_locs['x'].iloc[0]
-            rand_locs['dy'] = rand_locs['y']-rand_locs['y'].iloc[0]
+            rand_locs['dx'] = rand_locs['poi_x']-rand_locs['poi_x'].iloc[0]
+            rand_locs['dy'] = rand_locs['poi_y']-rand_locs['poi_y'].iloc[0]
             rand_locs['d'] = (rand_locs['dx']**2 + rand_locs['dy']**2)**0.5 / self.speed
             # idxs = list(rand_locs.index[:2])
 
             poss_work_locs = rand_locs[rand_locs['d']<self.max_work_d]
             if len(poss_work_locs)>1:
                 work_loc = poss_work_locs.iloc[0]
-                self.locations['work'] = (work_loc['x'],work_loc['y'])
+                self.locations['work'] = (work_loc['poi_x'],work_loc['poi_y'])
                 # idxs += list(poss_work_locs.index[0])
                 
             # self.model.POIs.loc[idxs,'uses'] += 1
@@ -122,8 +122,7 @@ class EVAgent(Agent):
             self.find_closest_charge()
     
     def choose_new_location(self,locations_names_new):
-        loc_probs_hour = self.model.location_probs.loc[self.model.date_time.hour].to_dict()
-        loc_probs = np.array([loc_probs_hour[x] for x in locations_names_new])
+        loc_probs = np.array([self.model.loc_probs_hour[x] for x in locations_names_new])
         self.next_location = np.random.choice(locations_names_new, p=loc_probs/sum(loc_probs))
         return self.next_location
     
@@ -138,8 +137,8 @@ class EVAgent(Agent):
         # update random location if just been to one, cant be same as before, choose new POI
         if self.last_location =='random':
             if len(self.model.POIs)>3:
-                rand_locs = self.model.POIs.sample(1,weights=self.model.POIs.prob)
-                self.locations['random'] = (rand_locs.iloc[0].x, rand_locs.iloc[0].y)
+                rand_locs = self.model.POIs.sample(1,weights=self.model.POIs['poi_area'])
+                self.locations['random'] = (rand_locs.iloc[0]['poi_x'], rand_locs.iloc[0]['poi_y'])
                 self.model.POIs.loc[rand_locs.index,'uses'] += 1
             else:
                 self.locations['random'] = (np.random.random() * self.model.width,

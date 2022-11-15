@@ -74,7 +74,7 @@ model_params = {
         "choice", 
         'POIs', 
         value='None',
-        choices=['None','inputs/POIs.csv'],
+        choices=['None','inputs/POIs.csv','inputs/Mississauga_poi_data.csv'],
         description="How to distribute EV POIs",
     ),
     "ModelP_width": UserSettableParameter(
@@ -138,7 +138,7 @@ model_params = {
         "choice", 
         'Charge Point Distribution', 
         value='random',
-        choices=['random', 'uniform','inputs/CP_locs.csv'],
+        choices=['random', 'uniform','inputs/CP_locs.csv','inputs/Mississauga_charging_stations.csv'],
         description="How to distribute charge points",
     ),
 }
