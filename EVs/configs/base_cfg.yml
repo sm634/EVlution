@@ -44,9 +44,11 @@ agent_params:
     discharge_rate: 0.2
     MoveType :  'loc'
     charging: False
-    home_stay: 10
-    work_stay: 8
-    rand_stay: 3
+    max_range: 1
+    speed: 2
+    home_stay: [15,10]
+    work_stay: [6,8]
+    rand_stay: [6,3]
     completed_trip: 0
     dist_moved: 0
     max_work_d: 3
