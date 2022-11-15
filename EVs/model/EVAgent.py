@@ -2,6 +2,7 @@ from mesa import Agent
 import numpy as np
 import math
 import pandas as pd
+import pdb
 
 class EVAgent(Agent):
     """An Electric Vehical Agent with starting charge, home and work locations"""
@@ -14,25 +15,36 @@ class EVAgent(Agent):
         self.dx = 0
         self.dy = 0
         self.full = 0 # to make vis work (full corresponding to charge points)
-        self.moving = True
+        self.moving = False
         self.charge_load = 0
 
         for k,v in model.cfg['agent_params']['EVs'].items():
             setattr(self,k,v)
         
-        
-
         self.charge = np.random.uniform(0.5,1)*self.max_range
 
+        self.initialise_locs()
+
+    def initialise_locs(self):
         #set up starting locations for the EV agent
         if len(self.model.POIs)>3:
             #fix later to be less hacky
-            rand_locs = self.model.POIs.sample(3,weights=self.model.POIs.prob)
+            rand_locs = self.model.POIs.sample(frac=1).copy()
             self.locations = {  'home':     (rand_locs.iloc[0].x, rand_locs.iloc[0].y),
-                                'work':     (rand_locs.iloc[1].x, rand_locs.iloc[1].y),
-                                'random':   (rand_locs.iloc[2].x, rand_locs.iloc[2].y),
+                                'random':   (rand_locs.iloc[1].x, rand_locs.iloc[1].y),
                         }
-            self.model.POIs.loc[rand_locs.index,'uses'] += 1
+            rand_locs['dx'] = rand_locs['x']-rand_locs['x'].iloc[0]
+            rand_locs['dy'] = rand_locs['y']-rand_locs['y'].iloc[0]
+            rand_locs['d'] = (rand_locs['dx']**2 + rand_locs['dy']**2)**0.5 / self.speed
+            # idxs = list(rand_locs.index[:2])
+
+            poss_work_locs = rand_locs[rand_locs['d']<self.max_work_d]
+            if len(poss_work_locs)>1:
+                work_loc = poss_work_locs.iloc[0]
+                self.locations['work'] = (work_loc['x'],work_loc['y'])
+                # idxs += list(poss_work_locs.index[0])
+                
+            # self.model.POIs.loc[idxs,'uses'] += 1
         else:
             self.locations = {'home': (np.random.random() * self.model.width,
                                     np.random.random() * self.model.height),
@@ -45,15 +57,16 @@ class EVAgent(Agent):
         # the EV agent will always be travelling between locations last-next
         # todo set up random resting between locations and available to charge at home
         self.location_names = list(self.locations.keys())
-        self.last_location = np.random.choice(self.location_names)
+        
+        self.last_location = self.choose_new_location(self.location_names)
         locations_names_new = self.location_names[:]
         locations_names_new.remove(self.last_location)
-        self.next_location = np.random.choice(locations_names_new)
+        self.next_location = self.choose_new_location(locations_names_new)
 
         self.pos = self.locations[self.last_location]
         self.X = self.pos[0]
         self.Y = self.pos[1]
-        
+
         self.agent_schedule()
 
     def __repr__(self) -> str:
@@ -109,14 +122,9 @@ class EVAgent(Agent):
             self.find_closest_charge()
     
     def choose_new_location(self,locations_names_new):
-        # if self.model.location_probs != 'None':
-        #     loc_probs_hour = self.model.location_probs.loc[self.model.date_time.hour].to_dict()
-        #     loc_probs = np.array([loc_probs_hour[x] for x in locations_names_new])
-        #     self.next_location = np.random.choice(locations_names_new, p=loc_probs/sum(loc_probs))
-        #     if type(self.next_location) != str:
-        #         print(self.next_location)
-        # else:
-        self.next_location = np.random.choice(locations_names_new)
+        loc_probs_hour = self.model.location_probs.loc[self.model.date_time.hour].to_dict()
+        loc_probs = np.array([loc_probs_hour[x] for x in locations_names_new])
+        self.next_location = np.random.choice(locations_names_new, p=loc_probs/sum(loc_probs))
         return self.next_location
     
     def update_possible_locations(self):
@@ -188,17 +196,23 @@ class EVAgent(Agent):
         self.dist_moved = 0
 
         #if at home, work or charging point then could be charging. decide on if want to via price
-        if (not self.moving) and (self.last_location == 'work' or self.last_location == 'home'):
-            if self.price_function() and self.charge < 1:
+        if not self.moving and self.charge < 1:
+            if self.last_location == 'home' and self.home_charge_rate != 0:
+                if self.price_function():
+                    self.charging = True
+                    self.charge_load = self.home_charge_rate  # slow charge
+                    self.charge += self.charge_load
+            elif self.last_location == 'work' and self.work_charge_rate != 0 :
+                if self.price_function():
+                    self.charging = True
+                    self.charge_load = self.work_charge_rate  # slow charge
+                    self.charge += self.charge_load
+            # if at charging point and not moving then charge from point and check if full
+            elif self.last_location == 'charge':
                 self.charging = True
-                self.charge_load = 0.01  # slow charge
+                self.charge_load = self.ChargePoint_charge_rate  # fast charge, set via charge point attr
+                self.check_charge()
                 self.charge += self.charge_load
-        # if at charging point and not moving then charge from point and check if full
-        elif (not self.moving) and (self.last_location == 'charge'):
-            self.charging = True
-            self.charge_load = 0.1  # fast charge, set via charge point attr
-            self.check_charge()
-            self.charge += self.charge_load
 
        
         if self.wait > 0:  #if still waiting then continue to wait
