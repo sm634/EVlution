@@ -28,6 +28,7 @@ def generate_model_inputs(write_csv=False, filter=True):
     place_poi = place_poi[place_poi_cols]
     place_traffic = place_traffic[place_traffic_cols]
 
+    # putting in specific lat and lng coordinate reference points
     if filter:
         x_min_1 = -81.58
         x_max_1 = -79.01
@@ -37,6 +38,7 @@ def generate_model_inputs(write_csv=False, filter=True):
         y_max_1 = 46.63
         y_min_2 = 44.87
         y_max_2 = 45.41
+
         place_poi_1 = place_poi[
             (place_poi.poi_x >= x_min_1) &
             (place_poi.poi_x <= x_max_1) &
@@ -50,33 +52,43 @@ def generate_model_inputs(write_csv=False, filter=True):
             (place_poi.poi_y >= y_min_2) &
             (place_poi.poi_y <= y_max_2)
             ]
+
+        # charging stations have be within the min and max boundaries of the poi.
+        cs_x_min_1 = place_poi_1.poi_x.min()
+        cs_x_max_1 = place_poi_1.poi_x.max()
+        cs_y_min_1 = place_poi_1.poi_y.min()
+        cs_y_max_1 = place_poi_1.poi_y.max()
+
+        # positions of charging station bounding box 2.
+        cs_x_min_2 = place_poi_2.poi_x.min()
+        cs_x_max_2 = place_poi_2.poi_x.max()
+        cs_y_min_2 = place_poi_2.poi_y.min()
+        cs_y_max_2 = place_poi_2.poi_y.max()
+
         charging_stations_1 = charging_stations[
-            (charging_stations.x >= x_min_1) &
-            (charging_stations.x <= x_max_1) &
-            (charging_stations.y >= y_min_1) &
-            (charging_stations.y <= y_max_1)
+            (charging_stations.x > cs_x_min_1) &
+            (charging_stations.x < cs_x_max_1) &
+            (charging_stations.y > cs_y_min_1) &
+            (charging_stations.y < cs_y_max_1)
+            ]
+        charging_stations_2 = charging_stations[
+            (charging_stations.x > cs_x_min_2) &
+            (charging_stations.x < cs_x_max_2) &
+            (charging_stations.y > cs_y_min_2) &
+            (charging_stations.y < cs_y_max_2)
             ]
 
-        charging_stations_2 = charging_stations[
-            (charging_stations.x >= x_min_2) &
-            (charging_stations.x <= x_max_2) &
-            (charging_stations.y >= y_min_2) &
-            (charging_stations.y <= y_max_2)
-            ]
         place_traffic_1 = place_traffic[
             (place_traffic.traffic_x >= x_min_1) &
             (place_traffic.traffic_x <= x_max_1) &
             (place_traffic.traffic_y >= y_min_1) &
             (place_traffic.traffic_y <= y_max_1)
-
             ]
-
         place_traffic_2 = place_traffic[
             (place_traffic.traffic_x >= x_min_2) &
             (place_traffic.traffic_x <= x_max_2) &
             (place_traffic.traffic_y >= y_min_2) &
             (place_traffic.traffic_y <= y_max_2)
-
             ]
 
         if write_csv:
@@ -85,13 +97,13 @@ def generate_model_inputs(write_csv=False, filter=True):
             charging_stations_2.reset_index(drop=True).drop_duplicates(subset=['Station_Name']).to_csv(
                 'EVs/inputs/bounding_box_2_charging_stations.csv')
             place_poi_1.reset_index(drop=True).drop_duplicates(subset=['poi_name']
-                                                             ).to_csv(
+                                                               ).to_csv(
                 'EVs/inputs/bounding_box_1_poi_data.csv')
             place_poi_2.reset_index(drop=True).drop_duplicates(subset=['poi_name']
-                                                             ).to_csv(
+                                                               ).to_csv(
                 'EVs/inputs/bounding_box_2_poi_data.csv')
             place_traffic_1.reset_index(drop=True
-                                      ).drop_duplicates().to_csv(
+                                        ).drop_duplicates().to_csv(
                 'EVs/inputs/bounding_box_1_traffic_data.csv')
             place_traffic_2.reset_index(drop=True
                                         ).drop_duplicates().to_csv(
@@ -101,15 +113,15 @@ def generate_model_inputs(write_csv=False, filter=True):
         # write data to inputs for model
         if write_csv:
             charging_stations.reset_index(drop=True).drop_duplicates(subset=['Station_Name']).to_csv(
-                'EVs/inputs/'+area+'_charging_stations.csv')
+                'EVs/inputs/' + area + '_charging_stations.csv')
 
             place_poi.reset_index(drop=True).drop_duplicates(subset=['poi_name']
                                                              ).to_csv(
-                'EVs/inputs/'+area+'_poi_data.csv')
+                'EVs/inputs/' + area + '_poi_data.csv')
 
             place_traffic.reset_index(drop=True
                                       ).drop_duplicates().to_csv(
-                'EVs/inputs/'+area+'_traffic_data.csv')
+                'EVs/inputs/' + area + '_traffic_data.csv')
 
     return charging_stations, place_poi, place_traffic
 
