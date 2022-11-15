@@ -10,7 +10,7 @@ from preprocess_data.geo_location_formatter import GeoLocData
 
 
 # instantiate the geo location data class.
-def generate_model_inputs(write_csv=False, filter=True):
+def generate_model_inputs(write_csv=False, filter_poi=True):
     gfd = GeoLocData()
 
     area = None
@@ -29,7 +29,7 @@ def generate_model_inputs(write_csv=False, filter=True):
     place_traffic = place_traffic[place_traffic_cols]
 
     # putting in specific lat and lng coordinate reference points
-    if filter:
+    if filter_poi:
         x_min_1 = -81.58
         x_max_1 = -79.01
         x_min_2 = -76.94
