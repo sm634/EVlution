@@ -11,14 +11,14 @@ from preprocess_data.preprocess_utils import GeoLocData
 
 # instantiate the geo location data class.
 def generate_model_inputs(write_csv=False):
-
     gfd = GeoLocData()
 
-    gfd.get_charging_stations_data(city='Mississauga')
+    area = 'Mississauga'
+    gfd.get_charging_stations_data(city=area)
     charging_stations = gfd.charging_stations
 
-    place_poi = gfd.get_place_poi_gdf(place='Mississauga')
-    place_traffic = gfd.get_place_traffic_gdf(place='Mississauga')
+    place_poi = gfd.get_place_poi_gdf(place=area)
+    place_traffic = gfd.get_place_traffic_gdf(place=area)
 
     # filter out the output dataframes to only keep relevant columns.
     charging_cols = ['x', 'y', 'Station_Name', 'City']
@@ -31,15 +31,15 @@ def generate_model_inputs(write_csv=False):
     # write data to inputs for model
     if write_csv:
         charging_stations.reset_index(drop=True).drop_duplicates(subset=['Station_Name']).to_csv(
-            'EVs/inputs/Mississauga_charging_stations.csv')
+            'EVs/inputs/'+area+'_charging_stations.csv')
 
         place_poi.reset_index(drop=True).drop_duplicates(subset=['poi_name']
-                                                                         ).to_csv(
-            'EVs/inputs/Mississauga_poi_data.csv')
+                                                         ).to_csv(
+            'EVs/inputs/'+area+'_poi_data.csv')
 
         place_traffic.reset_index(drop=True
-                                                      ).drop_duplicates().to_csv(
-            'EVs/inputs/Mississauga_traffic_data.csv')
+                                  ).drop_duplicates().to_csv(
+            'EVs/inputs/'+area+'_traffic_data.csv')
 
     return charging_stations, place_poi, place_traffic
 
