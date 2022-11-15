@@ -23,8 +23,6 @@ class EVSpaceModel(Model):
         self.date_time = pd.to_datetime(self.start_date)
 
         # set up model space
-        self.space = ContinuousSpace(self.width+self.tol, self.height+self.tol, False,
-                                        x_min=-self.tol,y_min=-self.tol) 
         # could change to newtwork model with graph as road netowrk
         self.completed_trip = 0
 
@@ -32,9 +30,20 @@ class EVSpaceModel(Model):
         if self.POI_file != 'None':
             self.POIs = pd.read_csv(self.POI_file).set_index('id')
             self.POIs['uses'] = 0
+            self.xmin = min(self.POIs['x'])-self.tol
+            self.xmax = max(self.POIs['x'])+self.tol
+            self.ymin = min(self.POIs['y'])-self.tol
+            self.ymax = max(self.POIs['y'])+self.tol
+            self.width = self.xmax - self.xmin
+            self.height = self.ymax - self.ymin
+
         else:
             self.POIs = []
-            
+            self.xmin, self.ymin = -self.tol, -self.tol
+            self.xmax, self.ymax = self.width, self.height
+        
+        self.space = ContinuousSpace(self.xmax, self.ymax, False,
+                                        x_min=self.xmin,y_min=self.ymin) 
         # set up EV agents
         self.schedule = RandomActivation(self)
         self.schedule_list = ['schedule']
@@ -101,7 +110,7 @@ class EVSpaceModel(Model):
             elif 'ChargeP_' in key:
                 key_new = key.replace("ChargeP_", "")
                 self.cfg['agent_params']['Charge_Points'][key_new] = val
-        print(self.cfg)
+        # print(self.cfg)
         # for k,v in kwargs.items(): # superseeded
         #     setattr(self,k,v)
                 
@@ -129,13 +138,14 @@ class EVSpaceModel(Model):
             indices = np.arange(0, self.N_Charge, dtype=float) + 0.5
             r = np.sqrt(indices/self.N_Charge)
             theta = np.pi * (1 + 5**0.5) * indices
-            x_pos = r*np.cos(theta) * self.width/2 + self.width/2
-            y_pos = r*np.sin(theta) * self.height/2 + self.height/2
+            x_pos = r*np.cos(theta) * self.width/2 + self.width/2 + self.xmin
+            y_pos = r*np.sin(theta) * self.height/2 + self.height/2 + self.ymin
         else:
-            x_pos = np.random.random(self.N_Charge) * self.width
-            y_pos = np.random.random(self.N_Charge) * self.height
+            x_pos = np.random.random(self.N_Charge) * self.width + self.xmin
+            y_pos = np.random.random(self.N_Charge) * self.height + self.ymin
         
         charge_locs = list(zip(x_pos,y_pos))    
+        # print(charge_locs)
 
         # create and place charge points
         self.charge_locations = {}
@@ -154,8 +164,8 @@ class EVSpaceModel(Model):
         ''' determine grid point locations, to collect traffic from EVs passing '''
         grid_spacing = self.cfg['agent_params']['Grid_Points']['grid_spacing']
         if type(grid_spacing)==int:
-            grid_locs_x = np.linspace(0, self.width, grid_spacing)
-            grid_locs_y = np.linspace(0, self.height, grid_spacing)
+            grid_locs_x = np.linspace(self.xmin+self.tol, self.xmax-self.tol, grid_spacing)
+            grid_locs_y = np.linspace(self.ymin+self.tol, self.ymax-self.tol, grid_spacing)
             grid_locs = itertools.product(grid_locs_x, grid_locs_y) 
             radius = (self.width+self.height) / (2*grid_spacing)
             for i, pos in enumerate(grid_locs):

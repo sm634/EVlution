@@ -1,4 +1,5 @@
 jupyter
 matplotlib
-mesa
+mesa == 0.9.0
+seaborn
 numpy
