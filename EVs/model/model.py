@@ -21,7 +21,6 @@ class EVSpaceModel(Model):
         # Read in configuration files from yaml. If any additional configs then will overwrite base
 
         self.read_configs(kwargs)
-<<<<<<< HEAD
 
         if self.seed == 'None':
             self.seed = np.random.randint(10000)
@@ -29,9 +28,6 @@ class EVSpaceModel(Model):
         self.random.seed(self.seed)
         np.random.seed(self.seed)
 
-=======
-    
->>>>>>> 0dcc494ed7d1adb2d549e4d31fd330f476b71e3d
         self.location_probs_weekday = pd.read_csv(self.location_probs_weekday).set_index('hour')    
         self.location_probs_weekend = pd.read_csv(self.location_probs_weekend).set_index('hour')    
         self.date_time = pd.to_datetime(self.start_date)
