@@ -1,6 +1,7 @@
 import geopandas as gpd
 import pandas as pd
-# from preprocess_data.s3_connect import EVlutionS3Input
+from preprocess_data.calcs import lat_to_km, lng_to_km
+from preprocess_data.s3_connect import EVlutionS3Input
 
 
 class GeoLocData:
@@ -15,8 +16,8 @@ class GeoLocData:
         self.places = None
         self.traffic = None
         self.poi = None
-        # if s3:
-        #     self.s3_data = EVlutionS3Input()
+        if s3:
+            self.s3_data = EVlutionS3Input()
 
     @staticmethod
     def open_shape_file(file_path):
@@ -80,6 +81,11 @@ class GeoLocData:
                                                                          charging_stations.Y),
                                              crs='EPSG:4326'
                                              )
+        # field containing lat and lng to km.
+        charging_stations['x_km'] = charging_stations.X.apply(lambda x: lng_to_km(x))
+        charging_stations['y_km'] = charging_stations.Y.apply(lambda y: lat_to_km(y))
+
+        # renaming for standardising column names.
         charging_stations = charging_stations.rename(columns={'X': 'x',
                                                               'Y': 'y'})
 
@@ -159,6 +165,10 @@ class GeoLocData:
         places['place_x'] = places.place_centroid.x
         places['place_y'] = places.place_centroid.y
 
+        # field containing lat and lng to km.
+        places['place_x_km'] = places.place_x.apply(lambda x: lng_to_km(x))
+        places['place_y_km'] = places.place_y.apply(lambda y: lat_to_km(y))
+
         self.places = places
 
     def get_traffic_gdf(
@@ -198,9 +208,13 @@ class GeoLocData:
         # ordering to the get the biggest traffic zones.
         traffic = traffic.sort_values(by='traffic_area',
                                       ascending=False)
+
+        # storing coordinates x and y in separate columns as well as converting degrees to km.
         traffic['traffic_x'] = traffic.traffic_centroid.x
         traffic['traffic_y'] = traffic.traffic_centroid.y
 
+        traffic['traffic_x_km'] = traffic.traffic_x.apply(lambda x: lng_to_km(x))
+        traffic['traffic_y_km'] = traffic.traffic_y.apply(lambda y: lat_to_km(y))
         self.traffic = traffic
 
     def get_poi_gdf(
@@ -236,8 +250,12 @@ class GeoLocData:
         poi['poi_centroids'] = poi.centroid.to_crs(epsg=4326)
         poi['poi_area'] = poi.area
 
+        # storing coordinates x and y in separate columns as well as converting degrees to km.
         poi['poi_x'] = poi.poi_centroids.x
         poi['poi_y'] = poi.poi_centroids.y
+
+        poi['poi_x_km'] = poi.poi_x.apply(lambda x: lng_to_km(x))
+        poi['poi_y_km'] = poi.poi_y.apply(lambda y: lat_to_km(y))
 
         self.poi = poi
 
