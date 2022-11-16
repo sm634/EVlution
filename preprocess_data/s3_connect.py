@@ -12,6 +12,24 @@ class EVlutionS3Input:
         self.aws_secret_access_key = config('EVLUTION_AWS_SECRET_ACCESS_KEY')
         self.bucket_name = config('EVLUTION_BUCKET_NAME')
 
+    @staticmethod
+    def pdf_to_gdf(df: pd.DataFrame, geo_col: str = 'geometry'):
+        """
+        A function to convert a pandas DataFrame to a GeoDataFrame with a geomtery column
+
+        parameters
+        ----------
+        df: pandas DataFrame
+            A pandas DataFrame to be converted to a geoDataFrame.
+        geo_col: str
+            The column in the pandas DataFrame to be assigned the geo series in teh GeoDataFrame.
+        """
+        gs = gpd.GeoSeries.from_wkt(df[geo_col])
+        gdf = gpd.GeoDataFrame(df,
+                               geometry=gs,
+                               crs='EPSG:4326')
+        return gdf
+
     def access_evlution_input_s3(self):
         """
         Put in user credentials to access s3 data source.
@@ -34,18 +52,21 @@ class EVlutionS3Input:
 
     def get_places_data_raw(self):
         bucket = self.access_evlution_input_s3()
-        obj = bucket.Object('input/gis_osm_places_a_free_1.shp').get()
-        places = gpd.read_file(obj['Body'])
+        obj = bucket.Object('input/gis_osm_places_a_free_1.csv').get()
+        places = pd.read_csv(obj['Body'], sep='\t')
+        places = self.pdf_to_gdf(places)
         return places
 
     def get_traffic_data_raw(self):
         bucket = self.access_evlution_input_s3()
-        obj = bucket.Object('input/gis_osm_traffic_free_1.shp').get()
-        traffic = gpd.read_file(obj['Body'])
+        obj = bucket.Object('input/gis_osm_traffic_a_free_1.csv').get()
+        traffic = pd.read_csv(obj['Body'], sep='\t')
+        traffic = self.pdf_to_gdf(traffic)
         return traffic
 
     def get_poi_data_raw(self):
         bucket = self.access_evlution_input_s3()
-        obj = bucket.Object('input/gis_osm_pois_a_free_1.shp').get()
-        places = gpd.read_file(obj['Body'])
-        return places
+        obj = bucket.Object('input/gis_osm_pois_a_free_1.csv').get()
+        poi = pd.read_csv(obj['Body'], sep='\t')
+        poi = self.pdf_to_gdf(poi)
+        return poi

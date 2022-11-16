@@ -10,8 +10,8 @@ from preprocess_data.geo_location_formatter import GeoLocData
 
 
 # instantiate the geo location data class.
-def generate_model_inputs(write_csv=False, filter_poi=True):
-    gfd = GeoLocData()
+def generate_model_inputs(write_csv=False, filter_poi=True, s3=False):
+    gfd = GeoLocData(s3=s3)
 
     area = None
     gfd.get_charging_stations_data(city=area)
@@ -108,6 +108,8 @@ def generate_model_inputs(write_csv=False, filter_poi=True):
             place_traffic_2.reset_index(drop=True
                                         ).drop_duplicates().to_csv(
                 'EVs/inputs/bounding_box_2_traffic_data.csv')
+
+        print("Data Extraction and Process Done")
     else:
 
         # write data to inputs for model
@@ -123,7 +125,8 @@ def generate_model_inputs(write_csv=False, filter_poi=True):
                                       ).drop_duplicates().to_csv(
                 'EVs/inputs/' + area + '_traffic_data.csv')
 
+    print("Data extraction and Process Done.")
     return charging_stations, place_poi, place_traffic
 
 
-generate_model_inputs(write_csv=True, filter=True)
+generate_model_inputs(write_csv=True, filter_poi=True, s3=True)

@@ -16,7 +16,8 @@ class GeoLocData:
         self.places = None
         self.traffic = None
         self.poi = None
-        if s3:
+        self.s3 = s3
+        if self.s3:
             self.s3_data = EVlutionS3Input()
 
     @staticmethod
@@ -30,10 +31,23 @@ class GeoLocData:
         """
         return gpd.read_file(file_path)
 
+    @staticmethod
+    def rename_common_cols(prefix):
+        """
+        A simple function to rename common GeoFabrik file columns to prefix with the type of file.
+        e.g. 'name': 'place_name'
+        """
+        rename_dict = {
+            'osm_id': prefix + '_osm_id',
+            'code': prefix + '_code',
+            'fclass': prefix + '_fclass',
+            'name': prefix + '_name'
+        }
+        return rename_dict
+
     def get_charging_stations_data(
                                    self,
                                    city=None,
-                                   s3=False,
                                    file_path='preprocess_data/Data/Ontario_Electric_Charging_Stations.csv',
                                   ):
         """
@@ -54,7 +68,7 @@ class GeoLocData:
         -------
         A pandas DataFrame of the Ontario Electric Charging Stations Data with preprocessing steps applied.
         """
-        if s3:
+        if self.s3:
             charging_stations = self.s3_data.get_charging_stations_data_raw()
         else:
             charging_stations = pd.read_csv(file_path)
@@ -101,24 +115,9 @@ class GeoLocData:
 
         self.charging_stations = charging_stations
 
-    @staticmethod
-    def rename_common_cols(prefix):
-        """
-        A simple function to rename common GeoFabrik file columns to prefix with the type of file.
-        e.g. 'name': 'place_name'
-        """
-        rename_dict = {
-            'osm_id': prefix + '_osm_id',
-            'code': prefix + '_code',
-            'fclass': prefix + '_fclass',
-            'name': prefix + '_name'
-        }
-        return rename_dict
-
     def get_places_gdf(
                        self,
                        place=None,
-                       s3=False,
                        place_file='preprocess_data/Data/gis_osm_places_a_free_1.shp'
                       ):
         """
@@ -140,7 +139,7 @@ class GeoLocData:
         a pandas DataFrame of the place geolocation data.
         """
 
-        if s3:
+        if self.s3:
             places = self.s3_data.get_places_data_raw()
         else:
             places = self.open_shape_file(place_file)
@@ -173,7 +172,6 @@ class GeoLocData:
 
     def get_traffic_gdf(
                         self,
-                        s3=False,
                         traffic_file='preprocess_data/Data/gis_osm_traffic_a_free_1.shp'
                         ):
         """
@@ -192,7 +190,7 @@ class GeoLocData:
         -------
         a geopandas DataFrame of the traffic geolocation data.
         """
-        if s3:
+        if self.s3:
             traffic = self.s3_data.get_traffic_data_raw()
         else:
             traffic = self.open_shape_file(traffic_file)
@@ -219,7 +217,6 @@ class GeoLocData:
 
     def get_poi_gdf(
                     self,
-                    s3=False,
                     poi_file='preprocess_data/Data/gis_osm_pois_a_free_1.shp'
                     ):
         """
@@ -238,7 +235,7 @@ class GeoLocData:
         -------
         a geopandas DataFrame of the place of interest geolocation data.
         """
-        if s3:
+        if self.s3:
             poi = self.s3_data.get_poi_data_raw()
         else:
             poi = self.open_shape_file(poi_file)
@@ -261,11 +258,11 @@ class GeoLocData:
 
     def get_place_traffic_gdf(
                               self,
-                              place=None,
-                              s3=False):
+                              place=None
+                            ):
         # Get the preprocessed files for place and traffic.
-        self.get_places_gdf(place=place, s3=s3)
-        self.get_traffic_gdf(s3=s3)
+        self.get_places_gdf(place=place)
+        self.get_traffic_gdf()
 
         place_gdf = self.places
         traffic_gdf = self.traffic
@@ -280,10 +277,10 @@ class GeoLocData:
 
         return place_traffic
 
-    def get_place_poi_gdf(self, place=None, s3=False):
+    def get_place_poi_gdf(self, place=None):
         # Get the preprocessed files for place and traffic.
-        self.get_places_gdf(place=place, s3=s3)
-        self.get_poi_gdf(s3=s3)
+        self.get_places_gdf(place=place)
+        self.get_poi_gdf()
 
         place_gdf = self.places
         poi_gdf = self.poi
