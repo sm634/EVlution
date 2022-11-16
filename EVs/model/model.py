@@ -27,7 +27,6 @@ class EVSpaceModel(Model):
 
         self.random.seed(self.seed)
         np.random.seed(self.seed)
-
         self.location_probs_weekday = pd.read_csv(self.location_probs_weekday).set_index('hour')    
         self.location_probs_weekend = pd.read_csv(self.location_probs_weekend).set_index('hour')    
         self.date_time = pd.to_datetime(self.start_date)
