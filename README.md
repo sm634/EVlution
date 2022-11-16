@@ -17,3 +17,5 @@ Repo for EVlution hackathon team, Capgemini Invent
    conda env create -f environment.yml
    
    This should create the environment will all the packages you need to run all of the programmes in the EVlution codebase/pipeline.
+
+6. Using your preferred IDE, make sure you configure it to use the new environment (which will be called 'evlution_env' by default). You should now be able to execute any scripts in the EVlution codebase.
