@@ -5,6 +5,7 @@ model_params:
 
 agent_params: 
   EVs: 
-    num_agents: 7180
+    num_agents: 1000
+    rep_agents: 7000
   Charge_Points:
     CP_loc: 'inputs/Mississauga_charging_stations.csv'

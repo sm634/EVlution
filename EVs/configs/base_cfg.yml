@@ -48,6 +48,7 @@ agent_params:
     Type: 'EV'
     from_file: False
     num_agents: 1000
+    rep_agents: 1000
     region: 'default'
     # file: 'inputs/'
     discharge_rate: 0.2

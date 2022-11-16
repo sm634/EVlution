@@ -5,6 +5,7 @@ model_params:
 
 agent_params: 
   EVs: 
-    num_agents: 20
+    num_agents: 1000
+    rep_agents: 20
   Charge_Points:
     CP_loc: 'inputs/Point Edward_charging_stations.csv'
