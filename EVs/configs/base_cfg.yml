@@ -3,15 +3,20 @@ output:
   model_reporters: 
     model_name: 'model_name'
     COM: 'COM'
+    date_time: 'date_time'
     av_charge: 'av_charge'
     completed_trip: 'completed_trip'
     dead_cars: 'dead_cars'
     charge_load: 'charge_load'
-    date_time: 'date_time'
     av_moving: 'av_moving'
     av_home: 'av_home'
     av_work: 'av_work'
     av_random: 'av_random'
+    av_CP: 'av_CP'
+    lat: 'lat'
+    lon: 'lon'
+    seed: 'seed'
+    price: 'price'
     rep_agent: 'rep_agent'
   agent_reporters: 
     charge: "charge"
@@ -40,9 +45,14 @@ model_params:
   POI_file: 'inputs/POIs.csv'
   Traffic_file: 'None'
   time_increment: 1 # hours
-  price: 0
   location_probs_weekday: 'inputs/location_probs_weekday.csv'
   location_probs_weekend: 'inputs/location_probs_weekend.csv'
+  price: 0
+  price_set_mechanism: 0
+  price_peak: 0.66
+  price_offpeak: 0.33
+  price_midpeak: 0
+  price_df_file: 'inputs/hourly_price.csv'
   rep_agents: 1000
 
 agent_params: 

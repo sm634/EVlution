@@ -32,14 +32,18 @@ class EVSpaceModel(Model):
         self.date_time = pd.to_datetime(self.start_date)
         self.business_day = 1
 
-
+        if self.price_set_mechanism != 0:
+            self.price_df = pd.read_csv(self.price_df_file).set_index('hour')[self.price_set_mechanism]
+        else:
+            self.price_df = []
+            
         self.get_loc_probs()
-
-        # set up model space
-        # could change to newtwork model with graph as road netowrk
+        self.set_price()
         self.completed_trip = 0
 
-        # todo set up POI agents which EVs then choose which they want to go to
+        # Set up points of interest that the agents will choose from
+        # this also defines the parameter space for locations where an agent can be
+        # then also pick and save the lat/lon for use in vis
         if self.POI_file != 'None':
             self.POIs = pd.read_csv(self.POI_file).set_index('poi_name')
             self.POIs['uses'] = 0
@@ -53,12 +57,17 @@ class EVSpaceModel(Model):
             x = (max(self.POIs['poi_x'])+min(self.POIs['poi_x']))/2
             y = (max(self.POIs['poi_y'])+min(self.POIs['poi_y']))/2
             self.COM = (x,y)
+            self.lon = x
+            self.lat = y
         else:
             self.POIs = []
             self.xmin, self.ymin = -self.tol, -self.tol
             self.xmax, self.ymax = self.width, self.height
-            self.COM = (self.xmin+self.width/2, self.ymin+self.height/2)
+            self.lon = self.xmin+self.width/2
+            self.lat = self.ymin+self.height/2
+            self.COM = (self.lon, self.lat)
         
+        # set up model space
         self.space = ContinuousSpace(self.xmax, self.ymax, False,
                                         x_min=self.xmin,y_min=self.ymin) 
         # set up EV agents
@@ -94,14 +103,18 @@ class EVSpaceModel(Model):
         self.gen_GPs()
         self.schedule_gridpoints.step()
 
+        # collect starting values of all the observables, eg av charge of agents etc and update ready for collection
         self.update_vars()
-
+        #collect from each schedule, this adds to the back end where can then pull through tables to show what happened each step
+        # .collect() functions read from agent/model reporters as defined above to grab all the observables from the agents in schedules and overall model class
         self.datacollector.collect(self)
         self.datacollector_CP.collect(self)
         self.datacollector_gridpoints.collect(self)
         self.running = True
 
     def update(self,d, u):
+        """ function to update multi level dictionary whilst preserving all emelents of dict
+            this is vital for use updating the configurations """
         for k, v in u.items():
             if isinstance(v, collections.abc.Mapping):
                 d[k] = self.update(d.get(k, {}), v)
@@ -179,12 +192,15 @@ class EVSpaceModel(Model):
             name = str(i)+'_Charge'
 
             pos = charge_locs[i]
-            a = ChargePoint(name, self, pos)
-            self.schedule_CP.add(a)
+            try:
+                a = ChargePoint(name, self, pos)
+                self.schedule_CP.add(a)
 
-            # Add the agent to space
-            self.space.place_agent(a, pos)
-            self.charge_locations[name] = pos
+                # Add the agent to space
+                self.space.place_agent(a, pos)
+                self.charge_locations[name] = pos
+            except:
+                print(f'Charge Point Failed {name} {pos}')
 
     def gen_GPs(self):
         ''' determine grid point locations, to collect traffic from EVs passing '''
@@ -201,31 +217,58 @@ class EVSpaceModel(Model):
                 self.space.place_agent(a, a.pos)
 
     def is_business_day(self,date):
-        return bool(len(pd.bdate_range(date, date)))
+        """ calculates if the current day is a business day (not weekend or holiday) """
+        self.business_day = bool(len(pd.bdate_range(date, date)))
 
     def get_loc_probs(self):
-        if self.is_business_day(self.date_time):
+        """ uses business day logic to find locations of next location probabilites for agents """
+
+        self.is_business_day(self.date_time)
+
+        if self.business_day:
             self.loc_probs_hour = self.location_probs_weekday.loc[self.date_time.hour].to_dict()
-            self.business_day = 1
+            # could add something here to check if peak time leads to peak price
+            self.get_peak_times()
         else:
             self.loc_probs_hour = self.location_probs_weekend.loc[self.date_time.hour].to_dict()
-            self.business_day = 0
+            self.peak_time = 'off'
+            # this will always be off peak time
+        
+        self.set_price()
 
+    def set_price(self):
+        """ simple price mechanism which checks the price data frame and the hour associated """
+        if self.peak_time == 'on':
+            self.price = self.price_peak
+        elif self.peak_time == 'mid':
+            self.price = self.price_midpeak
+        else:
+            self.price = self.price_offpeak
+
+    def get_peak_times(self):
+        """ work out what peak time it is, on off or mid, which affects price """
+        if self.price_set_mechanism != 0:
+            # need to link here with the business day as off peak when not 
+            self.peak_time = self.price_df.loc[self.date_time.hour]
 
     def step(self):
         """ This is the key model function which is run once each step. Here we loop through the agent schedule, which performs each agent step """
         self.date_time += datetime.timedelta(hours=self.time_increment)
         self.get_loc_probs()
+        self.set_price()
         self.completed_trip = 0 
-        self.schedule.step()
-        self.schedule_CP.step()
-        self.schedule_gridpoints.step()
-        self.collect()
+        # call step function for every agent in each schedule
+        self.schedule.step() # EV agent step()
+        self.schedule_CP.step() # charge point agent step()
+        self.schedule_gridpoints.step() # gridpoint agent step()
+        self.collect() # collect all the data from the completed step to update model and agent dataframes
     
     def update_vars(self):
+        """ function to iupdate observables in the model to represent all EVs in the model """
         charge_list = []
         charge_load = []
         locs = []
+        # crudely loop through each agent and grab their stats
         for agent in self.schedule.agents:
             charge_list.append(agent.charge)
             charge_load.append(agent.charge_load)
@@ -237,24 +280,25 @@ class EVSpaceModel(Model):
         charge_list = np.array(charge_list)
         locs = np.array(locs)
 
+        #assign model stats to be collected by model_reporters in datacollection
         self.av_charge = np.mean(charge_list)
-        self.charge_load = np.mean(charge_load)
+        self.charge_load = sum(charge_load)
         self.dead_cars = len(charge_list[charge_list<0])/len(charge_list)        
         self.av_moving = np.mean(locs=='moving')
         self.av_home = np.mean(locs=='home')
         self.av_work = np.mean(locs=='work')
         self.av_random = np.mean(locs=='random')
+        self.av_CP = np.mean(locs=='charge')
             
 
     def collect(self):
-        ''' collect data '''
+        ''' collect data from agents and model and save to datacollection objects '''
         self.update_vars()
         self.datacollector.collect(self) # collect agent and model information
         self.datacollector_CP.collect(self) # collect agent and model information
         self.datacollector_gridpoints.collect(self) # collect agent and model information
 
-        if self.schedule.steps == 100:
-            self.save()  # crude save technique for online models
+        # to actually save the results need to use save() functions
 
     def run_model(self, n):
         """ if running offline model then can use this to run full model span """
@@ -263,21 +307,23 @@ class EVSpaceModel(Model):
 
     def save(self):
         """ save out model/agent dataframes if given model name """
+        # add new funct similar to this but save to online storeage
+
         if self.model_name != 0:
-            self.model_name += f'_{self.seed}'
             mdf = self.datacollector.get_model_vars_dataframe()
             
+            # checks to see in the config if the user wants to save model dataframes and agent data frames for Evs, charge points and grid poitns
             if self.cfg['output']['save_data']['model']:
-                mdf.to_csv('Data/mdf_{}.csv'.format(self.model_name))   
+                mdf.to_csv('Data/mdf_{}_{}.csv'.format(self.model_name,self.seed))   
                      
             if self.cfg['output']['save_data']['EVs']:
                 adf = self.datacollector.get_agent_vars_dataframe()
-                adf.to_csv('Data/adf_{}.csv'.format(self.model_name))
+                adf.to_csv('Data/adf_{}_{}.csv'.format(self.model_name,self.seed))
 
             if self.cfg['output']['save_data']['CPs']:
                 adf = self.datacollector_CP.get_agent_vars_dataframe()
-                adf.to_csv('Data/adf_CP_{}.csv'.format(self.model_name))
+                adf.to_csv('Data/adf_CP_{}_{}.csv'.format(self.model_name,self.seed))
 
             if self.cfg['output']['save_data']['GPs']:
                 adf = self.datacollector_gridpoints.get_agent_vars_dataframe()
-                adf.to_csv('Data/adf_GP_{}.csv'.format(self.model_name))
+                adf.to_csv('Data/adf_GP_{}_{}.csv'.format(self.model_name,self.seed))
