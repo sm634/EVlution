@@ -27,11 +27,11 @@ class EVSpaceModel(Model):
 
         self.random.seed(self.seed)
         np.random.seed(self.seed)
-
         self.location_probs_weekday = pd.read_csv(self.location_probs_weekday).set_index('hour')    
         self.location_probs_weekend = pd.read_csv(self.location_probs_weekend).set_index('hour')    
         self.date_time = pd.to_datetime(self.start_date)
         self.business_day = 1
+
 
         self.get_loc_probs()
 
@@ -206,10 +206,10 @@ class EVSpaceModel(Model):
     def get_loc_probs(self):
         if self.is_business_day(self.date_time):
             self.loc_probs_hour = self.location_probs_weekday.loc[self.date_time.hour].to_dict()
-            self.business_day = 0
+            self.business_day = 1
         else:
             self.loc_probs_hour = self.location_probs_weekend.loc[self.date_time.hour].to_dict()
-            self.business_day = 1
+            self.business_day = 0
 
 
     def step(self):
