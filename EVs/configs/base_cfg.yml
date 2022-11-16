@@ -17,6 +17,7 @@ output:
     lon: 'lon'
     seed: 'seed'
     price: 'price'
+    rep_agent: 'rep_agent'
   agent_reporters: 
     charge: "charge"
     last_location: 'last_location'
@@ -52,18 +53,21 @@ model_params:
   price_offpeak: 0.33
   price_midpeak: 0
   price_df_file: 'inputs/hourly_price.csv'
+  rep_agents: 1000
 
 agent_params: 
   EVs: 
     Type: 'EV'
     from_file: False
     num_agents: 1000
+    region: 'default'
     # file: 'inputs/'
     discharge_rate: 0.2
     MoveType :  'loc'
     charging: False
     max_range: 1
     speed: 2
+    # hours stayed at location [Weekend,Weekday] -- See 'business_day parameter for selection process'
     home_stay: [15,10]
     work_stay: [6,8]
     rand_stay: [6,3]

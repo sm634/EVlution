@@ -27,7 +27,6 @@ class EVSpaceModel(Model):
 
         self.random.seed(self.seed)
         np.random.seed(self.seed)
-
         self.location_probs_weekday = pd.read_csv(self.location_probs_weekday).set_index('hour')    
         self.location_probs_weekend = pd.read_csv(self.location_probs_weekend).set_index('hour')    
         self.date_time = pd.to_datetime(self.start_date)
@@ -37,6 +36,7 @@ class EVSpaceModel(Model):
             self.price_df = pd.read_csv(self.price_df_file).set_index('hour')[self.price_set_mechanism]
         else:
             self.price_df = []
+            
         self.get_loc_probs()
         self.set_price()
         self.completed_trip = 0
