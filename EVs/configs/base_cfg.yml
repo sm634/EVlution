@@ -12,6 +12,7 @@ output:
     av_home: 'av_home'
     av_work: 'av_work'
     av_random: 'av_random'
+    rep_agent: 'rep_agent'
   agent_reporters: 
     charge: "charge"
     last_location: 'last_location'
@@ -42,13 +43,13 @@ model_params:
   price: 0
   location_probs_weekday: 'inputs/location_probs_weekday.csv'
   location_probs_weekend: 'inputs/location_probs_weekend.csv'
+  rep_agents: 1000
 
 agent_params: 
   EVs: 
     Type: 'EV'
     from_file: False
     num_agents: 1000
-    rep_agents: 1000
     region: 'default'
     # file: 'inputs/'
     discharge_rate: 0.2
