@@ -32,6 +32,9 @@ class EVSpaceModel(Model):
         self.location_probs_weekend = pd.read_csv(self.location_probs_weekend).set_index('hour')    
         self.date_time = pd.to_datetime(self.start_date)
         self.business_day = 1
+        if self.price_set_mechanism != 0:
+            self.price_df = pd.read_csv(self.price_df_file).set_index('hour')[self.price_set_mechanism]
+            self.set_price()
 
         self.get_loc_probs()
 
@@ -53,11 +56,15 @@ class EVSpaceModel(Model):
             x = (max(self.POIs['poi_x'])+min(self.POIs['poi_x']))/2
             y = (max(self.POIs['poi_y'])+min(self.POIs['poi_y']))/2
             self.COM = (x,y)
+            self.lon = x
+            self.lat = y
         else:
             self.POIs = []
             self.xmin, self.ymin = -self.tol, -self.tol
             self.xmax, self.ymax = self.width, self.height
-            self.COM = (self.xmin+self.width/2, self.ymin+self.height/2)
+            self.lon = self.xmin+self.width/2
+            self.lat = self.ymin+self.height/2
+            self.COM = (self.lon, self.lat)
         
         self.space = ContinuousSpace(self.xmax, self.ymax, False,
                                         x_min=self.xmin,y_min=self.ymin) 
@@ -179,12 +186,15 @@ class EVSpaceModel(Model):
             name = str(i)+'_Charge'
 
             pos = charge_locs[i]
-            a = ChargePoint(name, self, pos)
-            self.schedule_CP.add(a)
+            try:
+                a = ChargePoint(name, self, pos)
+                self.schedule_CP.add(a)
 
-            # Add the agent to space
-            self.space.place_agent(a, pos)
-            self.charge_locations[name] = pos
+                # Add the agent to space
+                self.space.place_agent(a, pos)
+                self.charge_locations[name] = pos
+            except:
+                print(f'Charge Point Failed {name} {pos}')
 
     def gen_GPs(self):
         ''' determine grid point locations, to collect traffic from EVs passing '''
@@ -211,10 +221,14 @@ class EVSpaceModel(Model):
             self.loc_probs_hour = self.location_probs_weekend.loc[self.date_time.hour].to_dict()
             self.business_day = 1
 
+    def set_price(self):
+        if self.price_set_mechanism != 0:
+            self.price = self.price_df.loc[self.date_time.hour]
 
     def step(self):
         """ This is the key model function which is run once each step. Here we loop through the agent schedule, which performs each agent step """
         self.date_time += datetime.timedelta(hours=self.time_increment)
+        self.set_price()
         self.get_loc_probs()
         self.completed_trip = 0 
         self.schedule.step()
@@ -238,12 +252,13 @@ class EVSpaceModel(Model):
         locs = np.array(locs)
 
         self.av_charge = np.mean(charge_list)
-        self.charge_load = np.mean(charge_load)
+        self.charge_load = sum(charge_load)
         self.dead_cars = len(charge_list[charge_list<0])/len(charge_list)        
         self.av_moving = np.mean(locs=='moving')
         self.av_home = np.mean(locs=='home')
         self.av_work = np.mean(locs=='work')
         self.av_random = np.mean(locs=='random')
+        self.av_CP = np.mean(locs=='charge')
             
 
     def collect(self):
@@ -253,8 +268,8 @@ class EVSpaceModel(Model):
         self.datacollector_CP.collect(self) # collect agent and model information
         self.datacollector_gridpoints.collect(self) # collect agent and model information
 
-        if self.schedule.steps == 100:
-            self.save()  # crude save technique for online models
+        # if self.schedule.steps == 100:
+        #     self.save()  # crude save technique for online models
 
     def run_model(self, n):
         """ if running offline model then can use this to run full model span """
@@ -264,20 +279,19 @@ class EVSpaceModel(Model):
     def save(self):
         """ save out model/agent dataframes if given model name """
         if self.model_name != 0:
-            self.model_name += f'_{self.seed}'
             mdf = self.datacollector.get_model_vars_dataframe()
             
             if self.cfg['output']['save_data']['model']:
-                mdf.to_csv('Data/mdf_{}.csv'.format(self.model_name))   
+                mdf.to_csv('Data/mdf_{}_{}.csv'.format(self.model_name,self.seed))   
                      
             if self.cfg['output']['save_data']['EVs']:
                 adf = self.datacollector.get_agent_vars_dataframe()
-                adf.to_csv('Data/adf_{}.csv'.format(self.model_name))
+                adf.to_csv('Data/adf_{}_{}.csv'.format(self.model_name,self.seed))
 
             if self.cfg['output']['save_data']['CPs']:
                 adf = self.datacollector_CP.get_agent_vars_dataframe()
-                adf.to_csv('Data/adf_CP_{}.csv'.format(self.model_name))
+                adf.to_csv('Data/adf_CP_{}_{}.csv'.format(self.model_name,self.seed))
 
             if self.cfg['output']['save_data']['GPs']:
                 adf = self.datacollector_gridpoints.get_agent_vars_dataframe()
-                adf.to_csv('Data/adf_GP_{}.csv'.format(self.model_name))
+                adf.to_csv('Data/adf_GP_{}_{}.csv'.format(self.model_name,self.seed))

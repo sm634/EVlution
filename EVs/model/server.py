@@ -96,6 +96,7 @@ model_params = {
     ),
     "xx_ev_title": UserSettableParameter('static_text', value="Electric Vehical Parameters"),
     "EVP_num_agents": UserSettableParameter(
+        
         # "slider", #type of button
         # "Number of agents", # name
         # 100, # inital

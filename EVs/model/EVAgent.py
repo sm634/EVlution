@@ -179,7 +179,7 @@ class EVAgent(Agent):
     def price_function(self):
         charge_need = 1 - self.charge_pcnt
         choice_charge = True if charge_need > self.model.price else False
-        return True # choice_charge
+        return choice_charge
 
     def step(self):
         """ key agent step, can add functions in here for agent behaviours """
