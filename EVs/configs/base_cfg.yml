@@ -44,11 +44,10 @@ model_params:
   POI_file: 'inputs/POIs.csv'
   Traffic_file: 'None'
   time_increment: 1 # hours
-  price: 0
-  price_set_mechanism: 0
-  price_df_file: 'inputs/hourly_price.csv'
   location_probs_weekday: 'inputs/location_probs_weekday.csv'
   location_probs_weekend: 'inputs/location_probs_weekend.csv'
+  price: 0
+  price_set_mechanism: 0
   price_peak: 0.66
   price_offpeak: 0.33
   price_midpeak: 0

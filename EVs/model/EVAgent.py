@@ -28,7 +28,8 @@ class EVAgent(Agent):
         self.initialise_locs()
 
     def initialise_locs(self):
-        #set up starting locations for the EV agent
+        """ set up starting locations for the EV agent. pick this from list of POIs
+            home and work will remain constant through sim but the random one will change """
         if len(self.model.POIs)>3:
             #fix later to be less hacky
             rand_locs = self.model.POIs.sample(frac=1,random_state=np.random.randint(10000)).copy()
@@ -40,6 +41,7 @@ class EVAgent(Agent):
             rand_locs['d'] = (rand_locs['dx']**2 + rand_locs['dy']**2)**0.5 / self.dist_per_step
             # idxs = list(rand_locs.index[:2])
 
+            # choose work location that is closer than max_work_d hours travel away (ie cant work somewhere super far as wont be able to travel there)
             poss_work_locs = rand_locs[rand_locs['d']<self.max_work_d]
             if len(poss_work_locs)>1:
                 work_loc = poss_work_locs.iloc[0]
@@ -78,9 +80,9 @@ class EVAgent(Agent):
     def move(self):
         """ Each step the EV will move toward its desired next location with a distance (speed), and use some charge (discharge_rate)
             if the EV is charging then it will not move. Once it reaches its destination a new destination will be chosen. """
-            # find shortest path and move down it
-            # move to network model only leave a node if can get to next
-            # optimse route based on charging points
+        # find shortest path and move down it
+        # move to network model only leave a node if can get to next
+        # optimse route based on charging points
         # todo work out if agent can make it to location
         self.moving = True
         # location based movement, EVs move toward a location, when they get there they get a new location
@@ -113,9 +115,9 @@ class EVAgent(Agent):
         self.pos = new_position # update postion
 
     def get_new_location(self):
-        """ how to determine where to go next """
-        # if self.charging: # not move if still charging
-        #     pass
+        """ how to determine where to go next based on where now, and probabilies of next destination 
+            if running low on charge then will head straight to nearest charge point regardless of probability """
+        
         if self.charge_pcnt > self.next_point_charge: # if still got plenty of charge then select new location
             locations_names_new = self.update_possible_locations()
             self.next_location = self.choose_new_location(locations_names_new) 
@@ -123,11 +125,14 @@ class EVAgent(Agent):
             self.find_closest_charge()
     
     def choose_new_location(self,locations_names_new):
+        """ agent compares all possibile locations, and then uses the location probabilies from model.loc_probs_hour 
+            to see which location it will choose to go to """
         loc_probs = np.array([self.model.loc_probs_hour[x] for x in locations_names_new])
         self.next_location = np.random.choice(locations_names_new, p=loc_probs/sum(loc_probs))
         return self.next_location
     
     def update_possible_locations(self):
+        """ agent checks all the locations that it can move to, not including where it is at the moment """
         # cant choose last location or charging point
         self.location_names = list(self.locations.keys())
         locations_names_new = self.location_names[:]
@@ -177,6 +182,7 @@ class EVAgent(Agent):
         self.wait = round(self.wait)
 
     def price_function(self):
+        """ calculate if the agent wants to charge, compare charge need to price to get basic behaviour """
         charge_need = 1 - self.charge_pcnt
         choice_charge = True if charge_need > self.model.price else False
         return choice_charge
@@ -209,6 +215,8 @@ class EVAgent(Agent):
             self.charging = True
             
     def decide_to_charge(self):
+        """ agent works out if it is going to charge this step, based on if moving, if at home/work/charging point 
+            if the agent will charge then add to own charge and add load from agent, will be collected by model for overall load at step"""
         self.dist_moved = 0
         self.charge_load = 0 
         self.range = self.charge * self.efficiency_rating
