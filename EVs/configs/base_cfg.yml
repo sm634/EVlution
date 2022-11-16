@@ -48,12 +48,15 @@ agent_params:
     Type: 'EV'
     from_file: False
     num_agents: 1000
+    rep_agents: 1000
+    region: 'default'
     # file: 'inputs/'
     discharge_rate: 0.2
     MoveType :  'loc'
     charging: False
     max_range: 1
     speed: 2
+    # hours stayed at location [Weekend,Weekday] -- See 'business_day parameter for selection process'
     home_stay: [15,10]
     work_stay: [6,8]
     rand_stay: [6,3]
