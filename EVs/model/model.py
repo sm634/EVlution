@@ -10,6 +10,8 @@ import itertools
 import yaml
 from .datacollection import DataCollector
 import datetime 
+import collections.abc
+
 
 class EVSpaceModel(Model):
     """ Electric Vehical Model, where cars drive around between locations then pull into charge points """
@@ -17,10 +19,21 @@ class EVSpaceModel(Model):
         """ initalisation of the model, set up agent space, agents and collection modules"""
 
         # Read in configuration files from yaml. If any additional configs then will overwrite base
+
         self.read_configs(kwargs)
 
-        self.location_probs = pd.read_csv(self.location_probs).set_index('hour')    
+        if self.seed == 'None':
+            self.seed = np.random.randint(10000)
+
+        self.random.seed(self.seed)
+        np.random.seed(self.seed)
+
+        self.location_probs_weekday = pd.read_csv(self.location_probs_weekday).set_index('hour')    
+        self.location_probs_weekend = pd.read_csv(self.location_probs_weekend).set_index('hour')    
         self.date_time = pd.to_datetime(self.start_date)
+        self.business_day = 1
+
+        self.get_loc_probs()
 
         # set up model space
         # could change to newtwork model with graph as road netowrk
@@ -28,19 +41,23 @@ class EVSpaceModel(Model):
 
         # todo set up POI agents which EVs then choose which they want to go to
         if self.POI_file != 'None':
-            self.POIs = pd.read_csv(self.POI_file).set_index('id')
+            self.POIs = pd.read_csv(self.POI_file).set_index('poi_name')
             self.POIs['uses'] = 0
-            self.xmin = min(self.POIs['x'])-self.tol
-            self.xmax = max(self.POIs['x'])+self.tol
-            self.ymin = min(self.POIs['y'])-self.tol
-            self.ymax = max(self.POIs['y'])+self.tol
+            self.xmin = min(self.POIs['poi_x_km'])-self.tol
+            self.xmax = max(self.POIs['poi_x_km'])+self.tol
+            self.ymin = min(self.POIs['poi_y_km'])-self.tol
+            self.ymax = max(self.POIs['poi_y_km'])+self.tol
             self.width = self.xmax - self.xmin
             self.height = self.ymax - self.ymin
 
+            x = (max(self.POIs['poi_x'])+min(self.POIs['poi_x']))/2
+            y = (max(self.POIs['poi_y'])+min(self.POIs['poi_y']))/2
+            self.COM = (x,y)
         else:
             self.POIs = []
             self.xmin, self.ymin = -self.tol, -self.tol
             self.xmax, self.ymax = self.width, self.height
+            self.COM = (self.xmin+self.width/2, self.ymin+self.height/2)
         
         self.space = ContinuousSpace(self.xmax, self.ymax, False,
                                         x_min=self.xmin,y_min=self.ymin) 
@@ -84,40 +101,49 @@ class EVSpaceModel(Model):
         self.datacollector_gridpoints.collect(self)
         self.running = True
 
+    def update(self,d, u):
+        for k, v in u.items():
+            if isinstance(v, collections.abc.Mapping):
+                d[k] = self.update(d.get(k, {}), v)
+            else:
+                d[k] = v
+        return d
 
     def read_configs(self,kwargs):
         """ Read in configuation parameters from file given to set up model and agents"""
 
-        # firstly read in config file if given, else take base_config.yml 
-        # if 'cfg' in kwargs.keys():
-        #     cfg_file = kwargs['cfg']
-        # else:
+        # read in base config to update all params in there first
         cfg_file = 'configs/base_cfg.yml'
-        
         with open(cfg_file,'r') as ymlfile:
             self.cfg = yaml.safe_load(ymlfile)
-        
-        #loops through user set params and assigns them to the 
+            # if additional config file given then overwrite all vals in the new config over the base configs
+            # note new config will just overwrite what is there
+        if 'cfg' in kwargs.keys():
+            if kwargs['cfg'] != 'None':
+                cfg_file = kwargs['cfg']
+                with open(cfg_file,'r') as ymlfile:
+                    cfg_updates = yaml.safe_load(ymlfile)
+                self.cfg = self.update(self.cfg, cfg_updates)
+                # self.cfg.update(cfg_updates)
+
+        # loops through user set params and overwrites congif in particular areas
         # any additional key word arguments given in modle run instance will overwrite any params from the config file.
         # this is how we can use the vis tool to update params
         for key, val in kwargs.items():
-            if 'ModelP_' in key:
+            if 'ModelP_' in key and val != 'base':
                 key_new = key.replace("ModelP_", "")
                 self.cfg['model_params'][key_new] = val
-            elif 'EVP_' in key:
+            elif 'EVP_' in key and val != 'base':
                 key_new = key.replace("EVP_", "")
                 self.cfg['agent_params']['EVs'][key_new] = val
-            elif 'ChargeP_' in key:
+            elif 'ChargeP_' in key and val != 'base':
                 key_new = key.replace("ChargeP_", "")
                 self.cfg['agent_params']['Charge_Points'][key_new] = val
-        # print(self.cfg)
-        # for k,v in kwargs.items(): # superseeded
-        #     setattr(self,k,v)
                 
         # take model_params from config file and assign them as attributes to model class
         for k,v in self.cfg['model_params'].items():
             setattr(self,k,v)
-        
+        # print(self.cfg)
 
     def gen_CPs(self):
         ''' determine charge point locations, either uniform or randomly distribute '''
@@ -126,14 +152,14 @@ class EVSpaceModel(Model):
         if isinstance(self.CP_loc, pd.DataFrame):
             self.N_Charge = len(self.CP_loc)
             names = self.CP_loc.index
-            x_pos = self.CP_loc['x'].values
-            y_pos = self.CP_loc['y'].values
+            x_pos = self.CP_loc['x_km'].values
+            y_pos = self.CP_loc['y_km'].values
         elif '.csv' in self.CP_loc:
-            self.CP_locs = pd.read_csv(self.CP_loc).set_index('id')
+            self.CP_locs = pd.read_csv(self.CP_loc).set_index('Station_Name')
             self.N_Charge = len(self.CP_locs)
             names = self.CP_locs.index
-            x_pos = self.CP_locs['x'].values
-            y_pos = self.CP_locs['y'].values
+            x_pos = self.CP_locs['x_km'].values
+            y_pos = self.CP_locs['y_km'].values
         elif self.CP_loc == 'uniform':
             indices = np.arange(0, self.N_Charge, dtype=float) + 0.5
             r = np.sqrt(indices/self.N_Charge)
@@ -174,9 +200,22 @@ class EVSpaceModel(Model):
                 # Add the agent to a random space
                 self.space.place_agent(a, a.pos)
 
+    def is_business_day(self,date):
+        return bool(len(pd.bdate_range(date, date)))
+
+    def get_loc_probs(self):
+        if self.is_business_day(self.date_time):
+            self.loc_probs_hour = self.location_probs_weekday.loc[self.date_time.hour].to_dict()
+            self.business_day = 0
+        else:
+            self.loc_probs_hour = self.location_probs_weekend.loc[self.date_time.hour].to_dict()
+            self.business_day = 1
+
+
     def step(self):
         """ This is the key model function which is run once each step. Here we loop through the agent schedule, which performs each agent step """
         self.date_time += datetime.timedelta(hours=self.time_increment)
+        self.get_loc_probs()
         self.completed_trip = 0 
         self.schedule.step()
         self.schedule_CP.step()
@@ -225,14 +264,20 @@ class EVSpaceModel(Model):
     def save(self):
         """ save out model/agent dataframes if given model name """
         if self.model_name != 0:
+            self.model_name += f'_{self.seed}'
             mdf = self.datacollector.get_model_vars_dataframe()
-            adf = self.datacollector.get_agent_vars_dataframe()
             
-            mdf.to_csv('Data/mdf_{}.csv'.format(self.model_name))            
-            adf.to_csv('Data/adf_{}.csv'.format(self.model_name))
+            if self.cfg['output']['save_data']['model']:
+                mdf.to_csv('Data/mdf_{}.csv'.format(self.model_name))   
+                     
+            if self.cfg['output']['save_data']['EVs']:
+                adf = self.datacollector.get_agent_vars_dataframe()
+                adf.to_csv('Data/adf_{}.csv'.format(self.model_name))
 
-            adf = self.datacollector_CP.get_agent_vars_dataframe()
-            adf.to_csv('Data/adf_CP_{}.csv'.format(self.model_name))
+            if self.cfg['output']['save_data']['CPs']:
+                adf = self.datacollector_CP.get_agent_vars_dataframe()
+                adf.to_csv('Data/adf_CP_{}.csv'.format(self.model_name))
 
-            adf = self.datacollector_gridpoints.get_agent_vars_dataframe()
-            adf.to_csv('Data/adf_GP_{}.csv'.format(self.model_name))
+            if self.cfg['output']['save_data']['GPs']:
+                adf = self.datacollector_gridpoints.get_agent_vars_dataframe()
+                adf.to_csv('Data/adf_GP_{}.csv'.format(self.model_name))

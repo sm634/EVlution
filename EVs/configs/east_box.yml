@@ -1,0 +1,10 @@
+model_params: 
+  POI_file: 'inputs/bounding_box_2_poi_data.csv'
+  Traffic_file: 'None'
+  model_name :  'east block'
+
+agent_params: 
+  EVs: 
+    num_agents: 100
+  Charge_Points:
+    CP_loc: 'inputs/bounding_box_2_charging_stations.csv'
