@@ -2,10 +2,10 @@ model_params:
   POI_file: 'inputs/Point Edward_poi_data.csv'
   Traffic_file: 'None'
   model_name :  'Point Edward'
+  rep_agents: 20
 
 agent_params: 
   EVs: 
     num_agents: 1000
-    rep_agents: 20
   Charge_Points:
     CP_loc: 'inputs/Point Edward_charging_stations.csv'
