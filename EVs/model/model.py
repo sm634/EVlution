@@ -326,18 +326,19 @@ class EVSpaceModel(Model):
         if self.model_name != 0:
             mdf = self.datacollector.get_model_vars_dataframe()
             
-            # checks to see in the config if the user wants to save model dataframes and agent data frames for Evs, charge points and grid poitns
+            # checks to see in the config if the user wants to save model dataframes and agent data frames for Evs,
+            # charge points and grid points
             if self.cfg['output']['save_data']['model']:
-                mdf.to_csv('Data/mdf_{}_{}.csv'.format(self.model_name,self.seed))   
+                mdf.to_csv('Data/mdf_{}_{}.csv'.format(self.model_name, self.seed))
                      
             if self.cfg['output']['save_data']['EVs']:
                 adf = self.datacollector.get_agent_vars_dataframe()
-                adf.to_csv('Data/adf_{}_{}.csv'.format(self.model_name,self.seed))
+                adf.to_csv('Data/adf_{}_{}.csv'.format(self.model_name, self.seed))
 
             if self.cfg['output']['save_data']['CPs']:
                 adf = self.datacollector_CP.get_agent_vars_dataframe()
-                adf.to_csv('Data/adf_CP_{}_{}.csv'.format(self.model_name,self.seed))
+                adf.to_csv('Data/adf_CP_{}_{}.csv'.format(self.model_name, self.seed))
 
             if self.cfg['output']['save_data']['GPs']:
                 adf = self.datacollector_gridpoints.get_agent_vars_dataframe()
-                adf.to_csv('Data/adf_GP_{}_{}.csv'.format(self.model_name,self.seed))
+                adf.to_csv('Data/adf_GP_{}_{}.csv'.format(self.model_name, self.seed))
