@@ -42,3 +42,6 @@ def df_to_db():
 
     dbaccess.write_to_db(mdf_df, 'mdf_output')
     dbaccess.write_to_db(adf_df, 'adf_output')
+
+
+df_to_db()
