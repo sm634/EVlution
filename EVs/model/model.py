@@ -31,13 +31,11 @@ class EVSpaceModel(Model):
         self.location_probs_weekend = pd.read_csv(self.location_probs_weekend).set_index('hour')    
         self.date_time = pd.to_datetime(self.start_date)
         self.business_day = 1
-
-        if self.price_set_mechanism != 0:
-            self.price_df = pd.read_csv(self.price_df_file).set_index('hour')[self.price_set_mechanism]
-        else:
-            self.price_df = []
+        self.peak_times = []
+        self.mid_peak_times = []
             
         self.get_loc_probs()
+        self.get_peak_times()
         self.set_price()
         self.completed_trip = 0
 
@@ -238,23 +236,39 @@ class EVSpaceModel(Model):
 
     def set_price(self):
         """ simple price mechanism which checks the price data frame and the hour associated """
-        if self.peak_time == 'on':
+        if self.date_time.hour in self.peak_times:
             self.price = self.price_peak
-        elif self.peak_time == 'mid':
-            self.price = self.price_midpeak
+        elif self.date_time.hour in self.mid_peak_times:
+            self.price = self.price_mid_peak
         else:
-            self.price = self.price_offpeak
+            self.price = self.price_off_peak
 
     def get_peak_times(self):
         """ work out what peak time it is, on off or mid, which affects price """
         if self.price_set_mechanism != 0:
-            # need to link here with the business day as off peak when not 
-            self.peak_time = self.price_df.loc[self.date_time.hour]
+            if self.date_time.month in [11,12,1,2,3,4]:
+                self.season = 'Winter'
+                if self.business_day:
+                    self.peak_times = self.winter_peaks
+                    self.mid_peak_times = self.winter_mid_peaks
+                else:
+                    self.peak_times = []
+                    self.mid_peak_times = []
+            else:
+                self.season = 'Summer'
+                if self.business_day:
+                    self.peak_times = self.summer_peaks
+                    self.mid_peak_times = self.summer_mid_peaks
+                else:
+                    self.peak_times = []
+                    self.mid_peak_times = []
+
 
     def step(self):
         """ This is the key model function which is run once each step. Here we loop through the agent schedule, which performs each agent step """
         self.date_time += datetime.timedelta(hours=self.time_increment)
         self.get_loc_probs()
+        self.get_peak_times()
         self.set_price()
         self.completed_trip = 0 
         # call step function for every agent in each schedule

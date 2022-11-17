@@ -183,7 +183,7 @@ class EVAgent(Agent):
 
     def price_function(self):
         """ calculate if the agent wants to charge, compare charge need to price to get basic behaviour """
-        charge_need = 1 - self.charge_pcnt
+        charge_need = (1.2 - self.charge_pcnt) * self.model.price_peak
         choice_charge = True if charge_need > self.model.price else False
         return choice_charge
 
