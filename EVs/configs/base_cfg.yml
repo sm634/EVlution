@@ -17,7 +17,8 @@ output:
     lon: 'lon'
     seed: 'seed'
     price: 'price'
-    rep_agent: 'rep_agent'
+    rep_agents: 'rep_agents'
+    season: 'season'
   agent_reporters: 
     charge: "charge"
     last_location: 'last_location'
@@ -48,10 +49,15 @@ model_params:
   location_probs_weekday: 'inputs/location_probs_weekday.csv'
   location_probs_weekend: 'inputs/location_probs_weekend.csv'
   price: 0
-  price_set_mechanism: 0
-  price_peak: 0.66
-  price_offpeak: 0.33
-  price_midpeak: 0
+  price_set_mechanism: 1
+  price_peak: 15.1
+  price_off_peak: 7.4
+  price_mid_peak: 10.2
+  winter_peaks: [7,8,9,10,17,18]
+  winter_mid_peaks: [11,12,13,14,15,16]
+  summer_peaks: [11,12,13,14,15,16]
+  Summer_mid_peaks: [7,8,9,10,17,18]
+  season: ''
   price_df_file: 'inputs/hourly_price.csv'
   rep_agents: 1000
 
