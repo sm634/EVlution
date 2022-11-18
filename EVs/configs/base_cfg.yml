@@ -60,6 +60,9 @@ model_params:
   season: ''
   price_df_file: 'inputs/hourly_price.csv'
   rep_agents: 1000
+  total_agents: 150000
+  growth_rate: 0.0001
+
 
 agent_params: 
   EVs: 
