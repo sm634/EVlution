@@ -38,5 +38,5 @@ class DBAccess:
         """
 
         connection = self.engine.connect()
-        df.to_sql(con=connection, name=table_name, chunksize=100, if_exists='replace')
+        df.to_sql(con=connection, name=table_name, chunksize=1000, if_exists='replace')
         connection.close()

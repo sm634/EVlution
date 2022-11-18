@@ -56,7 +56,7 @@ model_params:
   winter_peaks: [7,8,9,10,17,18]
   winter_mid_peaks: [11,12,13,14,15,16]
   summer_peaks: [11,12,13,14,15,16]
-  Summer_mid_peaks: [7,8,9,10,17,18]
+  summer_mid_peaks: [7,8,9,10,17,18]
   season: ''
   price_df_file: 'inputs/hourly_price.csv'
   rep_agents: 1000

@@ -5,6 +5,7 @@ cfgs = ['None', 'configs/Mississauga_cfg.yml', 'configs/Point_Edward_cfg.yml',
 
 for cfg in cfgs:
     for seed in range(4):
+        print(cfg, ": ", seed)
         model = EVSpaceModel(cfg=cfg, ModelP_seed=seed)
         model.run_model(9000)
         model.save()
