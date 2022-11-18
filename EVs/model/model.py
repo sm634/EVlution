@@ -34,6 +34,7 @@ class EVSpaceModel(Model):
         self.business_day = 1
         self.peak_times = []
         self.mid_peak_times = []
+        self.evpopratio = self.rep_agents/self.total_agents
 
         self.get_loc_probs()
         self.get_peak_times()
@@ -264,6 +265,12 @@ class EVSpaceModel(Model):
                     self.peak_times = []
                     self.mid_peak_times = []
 
+    def update_rep_agents(self):
+        #Careful of rounding, the calculation only seems ineffecient because care has to be taken not to round down
+        self.agent_change = self.total_agents*self.growth_rate
+        self.total_agents = self.total_agents + self.agent_change
+        self.rep_agents = round(self.evpopratio*self.total_agents)
+
     def step(self):
         """ This is the key model function which is run once each step. Here we loop through the agent schedule,
         which performs each agent step """
@@ -271,6 +278,7 @@ class EVSpaceModel(Model):
         self.get_loc_probs()
         self.get_peak_times()
         self.set_price()
+        self.update_rep_agents()
         self.completed_trip = 0
         # call step function for every agent in each schedule
         self.schedule.step()  # EV agent step()
