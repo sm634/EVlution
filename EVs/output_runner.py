@@ -7,6 +7,7 @@ from db_access import DBAccess
 import pandas as pd
 import os
 import re
+import datetime
 
 files = os.listdir('Data/')
 
@@ -90,6 +91,10 @@ def df_to_db():
 
     if len(mdf_df_list) > 0:
         mdf_df = pd.concat(mdf_df_list)
+        mdf_df = mdf_df.reset_index()
+        # save the output by throwing away the first month of simulated data.
+        mdf_df = (mdf_df[(mdf_df['date_time'].dt.date >= datetime.date(2022, 11, 20))])
+        mdf_df = mdf_df.set_index('date_time')
         print("Writing mdf_full_output to database")
         dbaccess.write_to_db(mdf_df, 'mdf_full_output')
         print("Full output completed writing to database")
