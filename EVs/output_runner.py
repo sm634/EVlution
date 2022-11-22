@@ -59,7 +59,7 @@ def get_avg_df(df):
     return df
 
 
-def df_to_db(csv=True, database=False):
+def df_to_db(pickle=True, database=False):
     # instantiate dbaccess.
     dbaccess = DBAccess()
 
@@ -96,12 +96,12 @@ def df_to_db(csv=True, database=False):
         mdf_df = (mdf_df[(mdf_df['date_time'].dt.date >= datetime.date(2022, 11, 20))])
         mdf_df = mdf_df.set_index('date_time')
 
-        if csv:
-            print("Writing mdf_full_output.csv to outputs directory in local")
-            mdf_df.to_csv('outputs/mdf_full_output.csv')
+        if pickle:
+            print("Writing mdf_full_output.p to outputs directory in local")
+            mdf_df.to_pickle('outputs/mdf_full_output.p')
             mdf_avg_df = get_avg_df(mdf_df)
             print("Writing mdf_avg_output.csv to outputs directory in local")
-            mdf_avg_df.to_csv('outputs/mdf_avg_output.csv')
+            mdf_avg_df.to_pickle('outputs/mdf_avg_output.p')
 
         if database:
             print("Writing mdf_full_output to database")
