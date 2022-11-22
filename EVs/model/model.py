@@ -14,7 +14,10 @@ import collections.abc
 
 
 class EVSpaceModel(Model):
-    """ Electric Vehical Model, where cars drive around between locations then pull into charge points """
+    """ Electric Vehical Model, where cars drive around between locations then pull into charge points. \n
+        A simple model of Electric Vehical agents moving around a space. Overtime they move between locations and use their battery charge, then go to find a charge point. The model was based on some introductory mesa examples found here: [Intro Tutorial](http://mesa.readthedocs.io/en/latest/intro-tutorial.html). \n
+        As the model runs, the agents move around loosing charge, when they get to their desired location they update where they want to go next, then when they start running out of charge they seek a charging point. \n
+        """
 
     def __init__(self, **kwargs):
         """ initalisation of the model, set up agent space, agents and collection modules"""
@@ -72,20 +75,22 @@ class EVSpaceModel(Model):
                                      x_min=self.xmin, y_min=self.ymin)
         # set up EV agents
         self.schedule = RandomActivation(self)
-        self.schedule_list = ['schedule']
         self.datacollector = DataCollector(schedule='schedule',
                                            model_reporters=self.cfg['output']['model_reporters'],
                                            agent_reporters=self.cfg['output']['agent_reporters']
                                            )
         for i in range(self.cfg['agent_params']['EVs']['num_agents']):
             a = EVAgent(i, self)
+            if i == self.cfg['agent_params']['EVs']['num_agents']-1:
+                a.large_id = True
+            else:
+                a.large_id = False
             self.schedule.add(a)
             # Add the agent to a random space
             self.space.place_agent(a, a.pos)
 
         # set up charging points
         self.schedule_CP = RandomActivation(self)
-        self.schedule_list.append('schedule_CP')
         self.datacollector_CP = DataCollector(schedule='schedule_CP',
                                               agent_reporters={"cars_charging": "cars_charging",
                                                                'full': 'full'}
@@ -94,7 +99,6 @@ class EVSpaceModel(Model):
 
         # set up grid points for analysis
         self.schedule_gridpoints = RandomActivation(self)
-        # self.schedule_list.append('schedule_gridpoints')
         self.datacollector_gridpoints = DataCollector(schedule='schedule_gridpoints',
                                                       agent_reporters={'pos': 'pos',
                                                                        "cars_passing": "cars_passing",
@@ -102,6 +106,9 @@ class EVSpaceModel(Model):
                                                       )
         self.gen_GPs()
         self.schedule_gridpoints.step()
+        self.schedule_list = ['schedule_CP','schedule']
+        # self.schedule_list.append('schedule_gridpoints')
+        # self.schedule_list.append('schedule_CP')
 
         # collect starting values of all the observables, eg av charge of agents etc and update ready for collection
         self.update_vars()
