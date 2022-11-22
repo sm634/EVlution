@@ -21,6 +21,7 @@ def agent_portrayal(agent):
         portrayal["Shape"] = "rect"
         portrayal["w"] = 0.05
         portrayal["h"] = 0.05
+        portrayal["Layer"] = 3 
         portrayal["Filled"] = False
         if agent.full:
             portrayal["Color"] = "red"
@@ -29,32 +30,27 @@ def agent_portrayal(agent):
         
     else:
         portrayal["r"] = 2
-
-        # todo fix arrowhead shape in js 
-        # portrayal["Shape"] = "arrowHead"
-        # portrayal["scale"] = 1
-        # portrayal["heading_x"] = 0 #agent.dx
-        # portrayal["heading_y"] = 1 #agent.dy
         
-        if agent.charge > 0.5:
-            portrayal["Color"] = "green"
-            portrayal["Layer"] = 1
+        if not agent.moving:
+            if agent.last_location =='home':
+                portrayal["Color"] = "red"
+            if agent.last_location =='work':
+                portrayal["Color"] = "green"
+            if agent.last_location =='charge':
+                portrayal["Color"] = "teal"
+            if agent.last_location =='random':
+                portrayal["Color"] = "pink"
         else:
-            portrayal["Color"] = "red"
-            portrayal["Layer"] = 1
+            if agent.charge > 0.5:
+                portrayal["Color"] = "blue"
+                portrayal["Layer"] = 1
+            else:
+                portrayal["Color"] = "black"
+                portrayal["Layer"] = 1
 
-        if agent.unique_id == 0:
-            portrayal["Layer"] = 2
+        if agent.large_id:
+            portrayal["Layer"] = 5
             portrayal["r"] = 10
-            if not agent.moving:
-                if agent.last_location =='home':
-                    portrayal["Color"] = "pink"
-                if agent.last_location =='work':
-                    portrayal["Color"] = "yellow"
-                if agent.last_location =='charge':
-                    portrayal["Color"] = "black"
-                if agent.last_location =='random':
-                    portrayal["Color"] = "teal"
 
     return portrayal
 
@@ -78,97 +74,51 @@ chart4 = ChartModule(
 
 model_params = {
     "xx_model_title": UserSettableParameter('static_text', value="Model Parameters"),
-    "ModelP_model_name": UserSettableParameter('number', value=0, description="Model Name"),
-    "ModelP_POI_file": UserSettableParameter(
-        "choice", 
-        'POIs', 
-        value='base',
-        choices=['base','None','inputs/POIs.csv','inputs/Mississauga_poi_data.csv'],
-        description="How to distribute EV POIs",
-    ),
     "cfg": UserSettableParameter(
         "choice", 
-        'Config File', 
+        'Configuration File', 
         value='None',
-        choices=['None','configs/Mississauga_cfg.yml','configs/Point_Edward_cfg.yml',
-        'configs/west_box.yml','configs/east_box.yml'],
+        choices=['configs/east_box.yml','None','configs/Mississauga_cfg.yml','configs/Point_Edward_cfg.yml', 'configs/west_box.yml'],
         description="How to distribute EV POIs",
     ),
     "xx_ev_title": UserSettableParameter('static_text', value="Electric Vehical Parameters"),
     "EVP_num_agents": UserSettableParameter(
-        
-        # "slider", #type of button
-        # "Number of agents", # name
-        # 100, # inital
-        # 10, # min
-        # 1000, # max
-        # 10, # increment
-        # description="Choose how many agents to include in the model",
-
         "choice", 
-        'Number of agents', 
+        'Number of EV Agents', 
         value='base',
         choices=['base',100, 500, 1000, 2000],
-        # description="How to distribute EV POIs",
+        description="Number of EV agents to place on the Grid",
     ),
-    "EVP_speed": UserSettableParameter(
-        # "slider",
-        # "Speed of Movement",
-        # .2,
-        # 0,
-        # 2,
-        # 0.1,
-        # description="Speed agents can move each step",
-
-
+    "EVP_dist_per_step": UserSettableParameter(
         "choice", 
-        'Speed of Movement', 
+        'Distance EVs can move (km/h)', 
         value='base',
-        choices=['base',0.01,0.1,0.2,0.5,1,10,50],
-        # description="How to distribute EV POIs",
+        choices=['base',1,5,10,25,50],
+        description="Distance EVs can move in 1 hour step",
     ),
-    "EVP_discharge_rate": UserSettableParameter(
-        # "slider",
-        # "discharge_rate",
-        # 0.01,
-        # 0.01,
-        # 0.2,
-        # 0.01,
-        # description="discharge_rate",
-
-        
+    "EVP_efficiency_rating": UserSettableParameter(
         "choice", 
-        'discharge_rate', 
+        'Efficiency Rating (km/kWh)', 
         value='base',
-        choices=['base',0.01,0.05,0.1,0.2,0.5,1],
+        choices=['base',1,3,5,10],
         # description="How to distribute EV POIs",
     ),
     
     "xx_charge_title": UserSettableParameter('static_text', value="CP Parameters"),
-    "ChargeP_N_Charge": UserSettableParameter(
-        # "slider", #type of button
-        # "Number of Charge Points", # name
-        # 10, # inital
-        # 1, # min
-        # 50, # max
-        # 1, # increment
-        # description="Choose how many Charge points to include in the model",
-
-        
-        "choice", 
-        'Number of Charge Points', 
-        value='base',
-        choices=['base',1,5,10,25,50,100],
-        # description="How to distribute EV POIs",
-    ),
     "ChargeP_CP_loc": UserSettableParameter(
         "choice", 
         'Charge Point Distribution', 
         value='base',
-        choices=['base','random', 'uniform','inputs/CP_locs.csv','inputs/Mississauga_charging_stations.csv'],
+        choices=['base','random'],
         description="How to distribute charge points",
+    ),
+    "ChargeP_N_Charge": UserSettableParameter(
+        "choice", 
+        'If Random Distribution Number of Charge Points', 
+        value='base',
+        choices=['base',1,5,10,25,50,100],
     ),
 }
 
-server = ModularServer(EVSpaceModel, [grid, chart,chart2,chart3,chart4], "EV Model", model_params)
+server = ModularServer(EVSpaceModel, [grid,chart3,chart4, chart,chart2], "EVlution Electric Vehicle Simulation Model", model_params)
 server.port = 8521

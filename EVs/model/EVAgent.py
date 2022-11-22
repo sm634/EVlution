@@ -39,6 +39,7 @@ class EVAgent(Agent):
             rand_locs['dx'] = rand_locs['poi_x_km']-rand_locs['poi_x_km'].iloc[0]
             rand_locs['dy'] = rand_locs['poi_y_km']-rand_locs['poi_y_km'].iloc[0]
             rand_locs['d'] = (rand_locs['dx']**2 + rand_locs['dy']**2)**0.5 / self.dist_per_step
+            rand_locs = rand_locs.iloc[2:]
             # idxs = list(rand_locs.index[:2])
 
             # choose work location that is closer than max_work_d hours travel away (ie cant work somewhere super far as wont be able to travel there)
@@ -152,7 +153,7 @@ class EVAgent(Agent):
         return locations_names_new
 
 
-    def get_distance(self, pi, pf):
+    def get_distance(self, pi, pf): 
         """ calculate distance and direction to next location """
         x_d = pf[0] - pi[0]
         y_d = pf[1] - pi[1]
