@@ -346,8 +346,9 @@ class EVSpaceModel(Model):
             if self.cfg['output']['save_data']['model']:
                 mdf.to_csv('Data/mdf_{}_{}.csv'.format(self.model_name, self.seed))
 
-            if self.cfg['output']['save_data']['EVs']:
-                adf = self.datacollector.get_agent_vars_dataframe()
+            if self.cfg['output']['save_data']['EVs']>0:
+                adf = self.datacollector.get_agent_vars_dataframe().reset_index()
+                adf = adf[adf['AgentID']<self.cfg['output']['save_data']['EVs']]
                 adf.to_csv('Data/adf_{}_{}.csv'.format(self.model_name, self.seed))
 
             if self.cfg['output']['save_data']['CPs']:
