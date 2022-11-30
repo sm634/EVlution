@@ -19,3 +19,18 @@ Repo for EVlution hackathon team, Capgemini Invent
    This should create the environment will all the packages you need to run all of the programmes in the EVlution codebase/pipeline.
 
 6. Using your preferred IDE, make sure you configure it to use the new environment (which will be called 'evlution_env' by default). You should now be able to execute any scripts in the EVlution codebase.
+
+
+#### Access to AWS Data Sources
+
+1. To pull in the data used by the ABM model, the pipeline connects to AWS S3 bucket. Please request the AWS_ACCESS_KEY and AWS_SECRET_KEY from safal.mukhia@capgemini.com. You will need an AWS user account.
+
+2. Once you have been provided S3 Access priveleges, the access key and secret key will be provided to you. 
+
+3. To make use of the credentials, you will need to create a .env file in the root EVlution directory. In the file, you should save: 
+```
+EVLUTION_AWS_ACCESS_KEY_ID=[access_key you were provided]
+EVLUTION_AWS_SECRET_ACCESS_KEY=[secret access key you were provided]
+EVLUTION_AWS_REGION_NAME=eu-west-2
+EVLUTION_BUCKET_NAME=evlution-data
+```
