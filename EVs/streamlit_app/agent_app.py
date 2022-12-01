@@ -57,7 +57,7 @@ def gen_app_3():
     agent_seed_data = gen_data(agent_data_source, seed)
     agent_seed_data['charge']+=50
     agent_seed_data = agent_seed_data[agent_seed_data['Step']<100]
-    fig = px.scatter_mapbox(agent_seed_data, lat="lat", lon="long", animation_frame="Step",size='charge',#color='loc',text ='AgentID',
+    fig = px.scatter_mapbox(agent_seed_data, lat="lat", lon="long", animation_frame="Step",#size='charge',color='loc',#text ='AgentID',
                             hover_data=['AgentID','charge','loc','next_location'],
         )
     fig.update_layout(

@@ -6,7 +6,7 @@ import streamlit as st
 import glob
 import datetime 
 
-
+@st.cache
 def get_data():
     names = glob.glob('../Data/mdf*.csv')
     data_list = []
@@ -19,6 +19,7 @@ def get_data():
         )
         data_list.append(data)
     data_all = pd.concat(data_list,ignore_index=True)
+    data_all['charge_load'] *= data_all['rep_agents']/1000
     return data_all
 
 def is_business_day(date):
@@ -32,7 +33,6 @@ def data_subset(data_all,locs,timeframe,specific_date):
     data['isbusinessday'] = [is_business_day(date) for date in data.date_time]
     data['hour'] = pd.to_datetime(data.date_time).dt.hour
     if timeframe == ['hour']:
-        data = data.groupby('hour').mean().reset_index()
         data['time_frame'] = data['hour']
 
     elif timeframe == ['day']:
@@ -42,20 +42,27 @@ def data_subset(data_all,locs,timeframe,specific_date):
 
     elif timeframe == ['weekday']:
         data = data[data['isbusinessday']]
-        data = data.groupby('hour').mean().reset_index()
         data['time_frame'] = data['hour']
         
     elif timeframe == ['weekend']:
         data = data[~data['isbusinessday']]
-        data = data.groupby('hour').mean().reset_index()
         data['time_frame'] = data['hour']
 
     else:
         data['time_frame'] = data['date_time']
-    data = data.groupby('time_frame').mean().reset_index()
+    
     return data
 
-    
+def data_plot(data, fields, together = True):
+    if together:
+        data_charts = data.groupby('time_frame').mean()[fields]
+    else:
+        data_charts = data.groupby(['time_frame','model_name']).mean()[fields].unstack()
+        data_charts.columns = data_charts.columns.get_level_values(1)
+
+    return data_charts
+
+@st.cache 
 def get_agent_data(loc):
     names = glob.glob(f'../Data/adf_{loc}*.csv')
     data_list = []
@@ -94,3 +101,44 @@ def colour_agents_SS(agent_data):
                                 )
                             )
     return agent_data
+
+
+
+#####
+    ######## Symbol mapbox
+    
+    # fig = go.Figure(go.Scattermapbox(mode = "markers", lat=agent_data["lat"], lon=agent_data["long"], marker =go.scattermapbox.Marker( {'size' : agent_data['r'],'symbol': agent_data['symbol']})),)
+    #             size='charge',text ='AgentID',#hover_data=['AgentID','charge','loc','next_location'],)
+    
+
+#     scatt = go.Scattermapbox( lat=agent_data["lat"], lon=agent_data["long"], mode = "markers",)#marker=dict(symbol ='marker', size=15, color='blue'))
+#     layout = go.Layout(title_text ='Pin location at a few cities in Netherlands', 
+#                    title_x =0.5, width=750, height=700,
+#                 #    mapbox_style="open-street-map",
+#                     mapbox_accesstoken= mapboxt,
+#                     mapbox_style = "mapbox://styles/gwharf/clb3hfgeo000314o88dkwagt8",
+#                     # mapbox = dict(center= dict(lat=agent_data["lat"].mean(), lon=agent_data["long"].mean()),            
+#                     #                 zoom=6,
+#                     #                 # style="light",
+#                     #                 style="open-street-map",),
+#                             )
+                            
+#     fig=go.Figure(data=[ scatt], layout =layout)
+
+#     fig.add_trace(
+#         go.Scattermapbox(
+#             mode="markers+lines",
+#             lon=[-50, -60, 40],
+#             lat=[30, 10, -20],
+#             marker={"size": 10, "symbol": "circle"},
+#         )
+#     )
+#     fig.update_layout(
+#     margin={"l": 0, "t": 0, "b": 0, "r": 0},
+#     mapbox={
+#         "center": {"lon": 10, "lat": 10},
+#         "style": "stamen-terrain",
+#         "center": {"lon": -20, "lat": -20},
+#         "zoom": 1,
+#     },
+# )

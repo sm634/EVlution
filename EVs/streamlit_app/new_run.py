@@ -2,7 +2,7 @@
 import streamlit as st
 import glob
 import os
-from utils import  data_subset
+from utils import  data_subset, data_plot
 import pandas as pd
 
 def run_new_model(**kwargs):
@@ -62,14 +62,26 @@ def gen_app():
         #     cc = st.text_input('ccc', value="NewRun")
 
         # Original time series chart. Omitted `get_chart` for clarity
-        data_charts = data_subset(mdf,['All'],timeframeXX,specific_date)
+        data = data_subset(mdf,[model_name],timeframeXX,specific_date)
+        col1, col4 = st.columns(2) # col2, col3, 
+        with col1:
+            st.write("charge_load")
+            st.line_chart(data_plot(data, ['charge_load']))
+        with col4:
+            st.write("EVs Positions %")
+            st.line_chart(data_plot(data, ['av_moving','av_home','av_work','av_random','av_CP'])*100)
 
-        st.line_chart(data_charts.set_index('time_frame')['charge_load'])
-        st.line_chart(data_charts.set_index('time_frame')[['av_moving','av_home','av_work','av_random','av_CP']])
-        st.line_chart(data_charts.set_index('time_frame')['av_charge'])
+        col1, col4 = st.columns(2) # col2, col3, 
+        with col1:
+            st.write("Average Charge")
+            st.line_chart(data_plot(data, ['av_charge'])) 
+        with col4:
+            st.write("Price")
+            st.line_chart(data_plot(data, ['price']))
     else:
         st.title(f"Model Version does not Exist")
         st.write(f"Once Happy with parameters above then click the button below to run a new model run")
-        run_model = st.button('Run New Model', on_click=run_new_model,kwargs=kwargs)
+        with st.spinner("Running Model"):
+            run_model = st.button('Run New Model', on_click=run_new_model,kwargs=kwargs)
         
 
