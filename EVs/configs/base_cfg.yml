@@ -32,7 +32,7 @@ output:
     charge_load: 'charge_load'
   save_data:
     model: True
-    EVs: False
+    EVs: 5
     CPs: False
     GPs: False
     
