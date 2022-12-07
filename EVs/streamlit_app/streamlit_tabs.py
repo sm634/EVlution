@@ -39,11 +39,11 @@ from  PIL import Image
 # with st.sidebar:
 
 
-alt.themes.enable("streamlit")
+# alt.themes.enable("streamlit")
 
 st.set_page_config(layout="wide")
 logo = Image.open(r'branding//cap_logo.png')
-col1, col2 = st.columns( [0.8, 0.2])
+col1, col2 = st.columns([0.8, 0.2])
 with col1:
    choose = option_menu("Team Evlution - EV Simulation", ['Live Run', "Model Results", "Agent Movement",'New Model Run'], 
                   icons=['shuffle', 'bar-chart', 'pin-map', 'node-plus'],
@@ -55,8 +55,8 @@ with col1:
                         #"nav-link-selected": {"background-color": "#02ab21"},
                         }
    )
-with col2:
-   st.image(logo, width=250 )
+# with col2:
+#    st.image(logo, width=250 )
 
 if choose == 'Live Run':
    new_run_live.gen_app()

@@ -10,10 +10,9 @@ from preprocess_data.geo_location_formatter import GeoLocData
 
 
 # instantiate the geo location data class.
-def generate_model_inputs(write_csv=False, filter_poi=True, s3=False):
+def generate_geoloc_inputs(area=None, write_csv=False, filter_poi=True, s3=False):
     gfd = GeoLocData(s3=s3)
 
-    area = None
     gfd.get_charging_stations_data(city=area)
     charging_stations = gfd.charging_stations
 
@@ -24,10 +23,16 @@ def generate_model_inputs(write_csv=False, filter_poi=True, s3=False):
     charging_cols = ['x', 'y', 'x_km', 'y_km', 'Station_Name', 'City']
     place_poi_cols = ['poi_x', 'poi_y', 'poi_x_km', 'poi_y_km', 'poi_name', 'poi_area', 'place_name']
     place_traffic_cols = ['traffic_x', 'traffic_y', 'traffic_x_km', 'traffic_y_km', 'traffic_area', 'place_name']
+    
     charging_stations = charging_stations[charging_cols]
+    print("Charging stations location dataset created")
     place_poi = place_poi[place_poi_cols]
+    print("POIs dataset created")
     place_traffic = place_traffic[place_traffic_cols]
+    print("Traffic location dataset created")
 
+    breakpoint()
+    
     # putting in specific lat and lng coordinate reference points
     if filter_poi:
         x_min_1 = -81.58
@@ -125,8 +130,9 @@ def generate_model_inputs(write_csv=False, filter_poi=True, s3=False):
                                       ).drop_duplicates().to_csv(
                 'EVs/inputs/' + area + '_traffic_data.csv')
 
-    print("Data extraction and Process Done.")
+        print("Data extraction and Process Done.")
+    
     return charging_stations, place_poi, place_traffic
 
 
-generate_model_inputs(write_csv=True, filter_poi=True, s3=True)
+generate_geoloc_inputs(area='Toronto', write_csv=True, filter_poi=False, s3=True)

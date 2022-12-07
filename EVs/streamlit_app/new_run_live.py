@@ -98,8 +98,8 @@ def plot_model():
         st.write("Charge Load Overall")
         st.line_chart(mdf['charge_load'])
     with col4:
-        st.write("Charge Load per Hour")
-        st.line_chart(mdf.groupby('hour').mean()['charge_load']*100)
+        st.write("Average charge Load per Hour")
+        st.line_chart(mdf.groupby('hour').mean()['charge_load'])
     with col5:
         st.write("EVs Positions %")
         st.line_chart(mdf[['av_moving','av_home','av_work','av_random','av_CP']]*100)
