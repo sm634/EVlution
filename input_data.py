@@ -31,8 +31,6 @@ def generate_geoloc_inputs(area=None, write_csv=False, filter_poi=True, s3=False
     place_traffic = place_traffic[place_traffic_cols]
     print("Traffic location dataset created")
 
-    breakpoint()
-    
     # putting in specific lat and lng coordinate reference points
     if filter_poi:
         x_min_1 = -81.58

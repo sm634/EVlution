@@ -78,7 +78,7 @@ model_params = {
         "choice", 
         'Configuration File', 
         value='None',
-        choices=['configs/east_box.yml','None','configs/Mississauga_cfg.yml','configs/Point_Edward_cfg.yml', 'configs/west_box.yml'],
+        choices=['configs/Toronto_cfg.yml', 'configs/east_box.yml','None','configs/Mississauga_cfg.yml','configs/Point_Edward_cfg.yml', 'configs/west_box.yml'],
         description="How to distribute EV POIs",
     ),
     "xx_ev_title": UserSettableParameter('static_text', value="Electric Vehical Parameters"),

@@ -1,0 +1,11 @@
+model_params: 
+  POI_file: 'inputs/Toronto_poi_data.csv'
+  Traffic_file: 'None'
+  model_name :  'Mississauga'
+  rep_agents: 30000
+
+agent_params: 
+  EVs: 
+    num_agents: 4000
+  Charge_Points:
+    CP_loc: 'inputs/Toronto_charging_stations.csv'
