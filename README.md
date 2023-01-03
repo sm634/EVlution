@@ -1,12 +1,6 @@
 # EVlution
 Repo for EVlution hackathon team, Capgemini Invent
 
-
-## Setup
-
-Repo for EVlution hackathon team, Capgemini Invent
-
-
 ## Setup
 
 1. Download Anaconda package, which will already have some required Data Science python libraries as well as bring in the Anaconda Prompt for Conda. You can download from here: https://www.anaconda.com/products/distribution
