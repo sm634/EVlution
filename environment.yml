@@ -21,3 +21,4 @@ dependencies:
     - ipykernel==6.16.2
     - plotly==5.11.0
     - streamlit==1.15.2
+    - streamlit-option-menu==0.3.2
