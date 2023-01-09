@@ -42,7 +42,7 @@ def gen_app():
         st.write("charge_load")
         st.line_chart(data_plot(data, ['charge_load'], together))
     with col4:
-        if not together:
+        if not together: 
             st.write("EVs Moving %")
             st.line_chart(data_plot(data, ['av_moving'], together)*100)
         else:
