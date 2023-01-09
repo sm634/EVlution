@@ -13,6 +13,9 @@ import numpy as np
 mapboxt = "pk.eyJ1IjoiZ3doYXJmIiwiYSI6ImNsYjNneW1iODA4b3kzcG10aW1qdzg0ZmcifQ.Dr044RJYsfRVTs-tp00dMA" ## open(".mapbox_token").read().rstrip() #my mapbox_access_token 
 # px.set_mapbox_access_token(mapboxt)
 
+lat_corr = 111.0
+long_corr = 111.32
+
 
 def setup_model(**kwargs):
     print('set up model')
@@ -33,8 +36,10 @@ async def run_live_model( per_second):
 def portrayal_method(agent): 
     portrayal = {"Shape": "circle", "Filled": "true", "r": 2}
     x, y = agent.pos
-    portrayal["long"] = x/111
-    portrayal["lat"] = y/111.321
+
+    portrayal["long"] = x/long_corr
+    portrayal["lat"] = y/lat_corr
+
     portrayal['AgentID'] = agent.unique_id
     if agent.Type == 'CP':
         portrayal['charge'] = 0
@@ -73,14 +78,16 @@ def plot_model():
     agent_data = pd.DataFrame(space_state)
     loc_list = agent_data['loc'].unique()
     loc_list.sort()
-    print(loc_list)
+
+    print(loc_list) 
+
 
     ####### Normal Scatter Mapbox
     fig = go.Figure(px.scatter_mapbox(agent_data, lat="lat", lon="long", color='loc',category_orders={'loc': loc_list}))
     # fig = go.Figure(go.Scattermapbox(mode = "markers", lat=agent_data["lat"], lon=agent_data["long"], marker =go.scattermapbox.Marker( {'symbol':'bus'})))#, color='loc',category_orders={'loc': loc_list})
     
-    fig.update_layout(  xaxis={'range':[st.session_state.model.xmin/111,    st.session_state.model.xmax/111]},
-                        yaxis={'range':[st.session_state.model.ymin/111.321,st.session_state.model.ymax/111.321]},
+    fig.update_layout(  xaxis={'range':[st.session_state.model.xmin/long_corr,    st.session_state.model.xmax/long_corr]},
+                        yaxis={'range':[st.session_state.model.ymin/lat_corr,st.session_state.model.ymax/lat_corr]},
                         mapbox_style="open-street-map",
                         margin=dict(l=0, r=0, t=0, b=0),
                     )
@@ -120,7 +127,8 @@ def gen_app():
         model_name = st.text_input('Model Name', value="NewRun")
         seed = st.slider('seed2', 0, 100,1)
         # with col2:
-        cfg = [st.radio('Configuration',poss_cfg, index=0 )][0]
+
+        cfg = st.radio('Configuration',poss_cfg, index=4 )
 
         col1, col3 = st.columns(2) # col2, col3
         with col1:

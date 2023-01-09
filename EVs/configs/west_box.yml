@@ -1,7 +1,7 @@
 model_params: 
   POI_file: 'inputs/bounding_box_1_poi_data.csv'
   Traffic_file: 'None'
-  model_name :  'west block'
+  model_name :  'Rural West'
   rep_agents: 2250
 
 agent_params: 

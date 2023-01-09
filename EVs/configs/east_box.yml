@@ -1,7 +1,7 @@
 model_params: 
   POI_file: 'inputs/bounding_box_2_poi_data.csv'
   Traffic_file: 'None'
-  model_name :  'east block'
+  model_name :  'Ottawa Region'
   rep_agents: 17000
 
 agent_params: 
