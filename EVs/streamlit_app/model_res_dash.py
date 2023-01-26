@@ -39,8 +39,9 @@ def gen_app():
     data = data_subset(source,locs,timeframe,specific_date)
     col1, col4 = st.columns(2) # col2, col3, 
     with col1:
-        st.write("charge_load")
-        st.line_chart(data_plot(data, ['charge_load'], together))
+        st.write("Charge Load per Agent")
+        data['charge_load_rep'] = data['charge_load'] / data['rep_agents']
+        st.line_chart(data_plot(data, ['charge_load_rep'], together))
     with col4:
         if not together: 
             st.write("EVs Moving %")
@@ -51,10 +52,10 @@ def gen_app():
 
     col1, col4 = st.columns(2) # col2, col3, 
     with col1:
-        st.write("Number of agents")
+        st.write("Number of representative agents")
         st.line_chart(data_plot(data, ['rep_agents'], together)) 
     with col4:
-        st.write("Price")
+        st.write("Price of Charging for Agents")
         st.line_chart(data_plot(data, ['price'], together))
    
 

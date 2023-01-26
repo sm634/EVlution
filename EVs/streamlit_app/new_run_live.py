@@ -32,7 +32,7 @@ async def run_live_model( per_second):
         print(time.time())
         st.experimental_rerun()
         # return model
-
+r = 0.0001
 def portrayal_method(agent): 
     portrayal = {"Shape": "circle", "Filled": "true", "r": 2}
     x, y = agent.pos
@@ -46,19 +46,19 @@ def portrayal_method(agent):
         portrayal['next_location'] = 0
         portrayal['symbol']= 'square'
         portrayal['loc'] = 'Charging Point'
-        portrayal['r'] = 10
+        portrayal['r'] = r
         
         if agent.full:
             portrayal["Color"] = "red"
         else:
             portrayal["Color"] = "Black"
     else:
-        portrayal["r"] = 2
+        portrayal["r"] =  r
         portrayal['symbol']= 'bus'
         portrayal["loc"] = 'moving' if agent.moving else agent.last_location
         if agent.large_id:
             portrayal["Layer"] = 5
-            portrayal["r"] = 10
+            portrayal["r"] = r
 
     return portrayal
 
@@ -83,7 +83,7 @@ def plot_model():
 
 
     ####### Normal Scatter Mapbox
-    fig = go.Figure(px.scatter_mapbox(agent_data, lat="lat", lon="long", color='loc',category_orders={'loc': loc_list}))
+    fig = go.Figure(px.scatter_mapbox(agent_data, lat="lat", lon="long", color='loc',category_orders={'loc': loc_list})) #,size ="r"
     # fig = go.Figure(go.Scattermapbox(mode = "markers", lat=agent_data["lat"], lon=agent_data["long"], marker =go.scattermapbox.Marker( {'symbol':'bus'})))#, color='loc',category_orders={'loc': loc_list})
     
     fig.update_layout(  xaxis={'range':[st.session_state.model.xmin/long_corr,    st.session_state.model.xmax/long_corr]},
@@ -92,7 +92,7 @@ def plot_model():
                         margin=dict(l=0, r=0, t=0, b=0),
                     )
 
-    st.write(f"date {st.session_state.model.date_time.strftime('%Y-%m-%d')} hour {st.session_state.model.date_time.strftime('%H')}")
+    st.write(f"Date: {st.session_state.model.date_time.strftime('%Y-%m-%d')} Hour: {st.session_state.model.date_time.strftime('%H')}")
     st.plotly_chart(fig, use_container_width=True)
 
 
