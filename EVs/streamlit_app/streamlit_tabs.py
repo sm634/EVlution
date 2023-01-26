@@ -38,8 +38,8 @@ from  PIL import Image
 #    new_run.gen_app()
 # with st.sidebar:
 
-
 alt.themes.enable("streamlit")
+
 
 st.set_page_config(layout="wide")
 logo = Image.open(r'branding//cap_logo.png')
